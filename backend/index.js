@@ -3,12 +3,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const path = require('path');
 
 // Initialize the express app
 const app = express();
 
-// Middleware to serve static files from the 'public' folder
-app.use(express.static('public'));
+// Middleware to serve static files from the 'frontend/public' folder
+app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 // Middleware setup to parse JSON request bodies
 app.use(bodyParser.json()); 
@@ -55,7 +56,7 @@ app.post('/register', async (req, res) => {
       console.error('Error registering user:', err.message); // Log the error message
       res.status(500).json({ message: 'Error registering user' });
     }
-  });
+});
   
 // Define the /login route for user login
 app.post('/login', async (req, res) => {
@@ -81,15 +82,14 @@ app.post('/login', async (req, res) => {
   }
 });
 
-  
 // Define a simple dashboard route (no token needed)
 app.get('/dashboard', (req, res) => {
-  res.status(200).send('Welcome to your dashboard!');
+  res.status(200).sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
 });
 
 // Fallback route to serve index.html if no other route matches
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
 // Start the server
