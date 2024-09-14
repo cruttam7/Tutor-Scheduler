@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="studentDashboard.css">  <!-- Ensure your CSS path is correct -->
+</head>
+<body>
+    <header>
+        <h1>Welcome to Your Student Dashboard, <span id="studentName">Student Name</span>!</h1>
+        <nav>
+            <ul>
+                <li><a href="/courses.html">My Courses</a></li>
+                <li><a href="/grades.html">My Grades</a></li>
+                <a href="#" onclick="logout(); return false;">Logout</a>
+
+            </ul>
+        </nav>
+    </header>
+    <section id="dashboardContent">
+        <h2>Recent Activities</h2>
+        <div id="activities">
+            <!-- Dynamic content can be loaded here -->
+        </div>
+    </section>
+    <footer>
+        <p>Copyright © 2024 by Your University</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Assume we fetch student data from a server-side API
+    fetch('/api/student/details')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('studentName').textContent = data.name;
+        // Populate activities or other dashboard elements
+    })
+    .catch(error => console.log('Error fetching student data:', error));
+
+    // Logout functionality
+    window.logout = function() {
+        fetch('/api/logout', { method: 'POST' })
+        .then(() => window.location.href = '/index.html')
+        .catch(error => console.error('Logout failed:', error));
+    }
+});
+
+    </script>
+</body>
+</html>

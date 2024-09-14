@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <h2>Student Login</h2>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Enter your email" required>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+        
+            fetch('/students/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Login successful') {
+                    // Redirect to the dashboard page
+                    window.location.href = '/studentDashboard.html';  // Update this URL to your specific dashboard page
+                } else {
+                    alert(data.message);  // Show other messages as alerts
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        </script>
+        
+
+</body>
+</html>

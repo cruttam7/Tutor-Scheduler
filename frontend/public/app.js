@@ -76,3 +76,58 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Assume we fetch student data from a server-side API
+    fetch('/api/student/details')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('studentName').textContent = data.name;
+        // Populate activities or other dashboard elements
+    })
+    .catch(error => console.log('Error fetching student data:', error));
+
+    // Logout functionality
+    window.logout = function() {
+        fetch('/api/logout', { method: 'POST' })
+        .then(() => window.location.href = '/index.html')
+        .catch(error => console.error('Logout failed:', error));
+    }
+});
+
+function logout() {
+    fetch('/logout', {
+        method: 'POST'
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(error => console.error('Logout failed:', error));
+}
+document.getElementById('createStudentForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const email = document.getElementById('studentEmail').value;
+    const password = document.getElementById('studentPassword').value;
+
+    fetch('/tutors/create-student', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.message === 'Student account created successfully') {
+            // Clear the form after successful creation
+            document.getElementById('studentEmail').value = '';
+            document.getElementById('studentPassword').value = '';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+
+

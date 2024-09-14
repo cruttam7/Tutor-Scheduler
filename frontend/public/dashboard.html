@@ -10,6 +10,19 @@
     <h1>Welcome to your dashboard!</h1>
     <p>This is where you can view your information.</p>
     <button onclick="window.location.href='profile.html'">Edit Profile</button>
-    <p>Creae an account for student<a href="register.html">Register here</a></p>
+    <a href="#" onclick="logout(); return false;">Logout</a>
+    <p>Creae an account for student<a href="register.html">Register account here for teacher </a></p>
+</body>
+<body>
+ <!-- dashboard.html -->
+<h2>Create Student Account</h2>
+<form id="createStudentForm">
+    Student Email: <input type="email" id="studentEmail" required>
+    Student Password: <input type="password" id="studentPassword" required>
+    <button type="submit">Create Student Account</button>
+</form>
+
+<script src="app.js"></script>
+
 </body>
 </html>

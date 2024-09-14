@@ -442,7 +442,7 @@ footer {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 768px) {}
     .menu-toggle {
         display: inline-block; /* Show the menu button */
     }
@@ -468,3 +468,4 @@ footer {
     nav ul li a {
         width: 100%;
         padding: 10px 20
+    }

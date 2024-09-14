@@ -24,10 +24,15 @@ mongoose.connect('mongodb://localhost:27017/your-database-name', {
   console.log('Failed to connect to MongoDB', err);
 });
 
-// Import the User model
-const User = require('./models/User');
+// Setup routes for student login (already defined)
+const studentRoutes = require('./routes/studentRoutes'); // adjust the path as necessary
+app.use('/students', studentRoutes);
 
-// Define the /register route for user registration
+// Import the User model (for tutors)
+const User = require('./models/User');
+const Student = require('./models/Student'); // Add Student model here
+
+// Define the /register route for tutor registration
 app.post('/register', async (req, res) => {
     try {
       const existingUser = await User.findOne({ email: req.body.email });
@@ -58,7 +63,7 @@ app.post('/register', async (req, res) => {
     }
 });
   
-// Define the /login route for user login
+// Define the /login route for tutor login
 app.post('/login', async (req, res) => {
   try {
       // Normalize the email to lowercase before searching in the database
@@ -82,7 +87,54 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Define a simple dashboard route (no token needed)
+// Define the /tutors/create-student route for tutors to create student accounts
+app.post('/tutors/create-student', async (req, res) => {
+    const { email, password } = req.body;
+
+    // Check if the student email already exists
+    const existingStudent = await Student.findOne({ email });
+    if (existingStudent) {
+        return res.status(400).json({ message: 'Email already in use by another student' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new student
+    const student = new Student({
+        email,
+        password: hashedPassword
+    });
+
+    // Save the student
+    try {
+        await student.save();
+        res.status(201).json({ message: 'Student account created successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating student account', error: error.message });
+    }
+});
+
+app.post('/students/login', (req, res) => {
+  console.log('Request received on /students/login');
+});
+
+// Logout route
+app.post('/logout', (req, res) => {
+  // Clear the user session or token
+  // For example, if using session cookies:
+  req.session.destroy((err) => {
+      if (err) {
+          return res.status(500).send('Failed to log out.');
+      }
+
+      // Redirect to the homepage
+      res.redirect('/');
+  });
+});
+
+
+// Define a simple dashboard route for tutors
 app.get('/dashboard', (req, res) => {
   res.status(200).sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
 });
