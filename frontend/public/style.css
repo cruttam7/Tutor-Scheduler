@@ -829,3 +829,13 @@ footer {
     top: 10px; /* Bring it back on screen when focused */
     left: 10px;
 }
+/* updated code*/
+header.scrolled .search-bar {
+    transform: scale(0.9); /* Slightly scale down on scroll */
+}
+/* When scrolled */
+header.scrolled {
+    background-color: #0e6fee;
+    padding: 30px 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
