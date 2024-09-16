@@ -7,22 +7,28 @@
     <title>Dashboard</title>
 </head>
 <body>
-    <h1>Welcome to your dashboard!</h1>
-    <p>This is where you can view your information.</p>
-    <button onclick="window.location.href='profile.html'">Edit Profile</button>
-    <a href="#" onclick="logout(); return false;">Logout</a>
-    <p>Creae an account for student<a href="register.html">Register account here for teacher </a></p>
-</body>
-<body>
- <!-- dashboard.html -->
-<h2>Create Student Account</h2>
-<form id="createStudentForm">
-    Student Email: <input type="email" id="studentEmail" required>
-    Student Password: <input type="password" id="studentPassword" required>
-    <button type="submit">Create Student Account</button>
-</form>
+    <div class="dashboard-container">
+        <h1>Welcome to your dashboard!</h1>
+        <p>This is where you can view your information.</p>
+        <button class="primary-button" onclick="window.location.href='profile.html'">Edit Profile</button>
+        <a href="#" class="logout-link" onclick="logout(); return false;">Logout</a>
+        
+        <div class="create-account-section">
+            <h2>Create Student Account</h2>
+            <form id="createStudentForm">
+                <label for="studentEmail">Student Email</label>
+                <input type="email" id="studentEmail" placeholder="Enter student email" required>
+                
+                <label for="studentPassword">Student Password</label>
+                <input type="password" id="studentPassword" placeholder="Enter student password" required>
+                
+                <button class="primary-button" type="submit">Create Student Account</button>
+            </form>
+        </div>
 
-<script src="app.js"></script>
+        <p>Need to create an account for a teacher? <a href="register.html" class="secondary-link">Register account here for teacher</a></p>
+    </div>
 
+    <script src="app.js"></script>
 </body>
 </html>
