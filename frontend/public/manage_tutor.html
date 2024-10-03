@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Manage Users</h1>
+  <div id="usersTable"></div>
+
+  <script>
+    // Fetch users (tutors) from the backend
+    async function fetchUsers() {
+      try {
+        const response = await fetch('/admin/manage-users');
+        const users = await response.json();
+
+        const usersTable = document.getElementById('usersTable');
+        usersTable.innerHTML = '';
+
+        users.forEach(user => {
+          const row = document.createElement('div');
+          row.innerHTML = `
+            <div>
+              <strong>${user.username}</strong> - ${user.email}
+              <button onclick="editUser('${user._id}')">Edit</button>
+              <button onclick="deleteUser('${user._id}')">Delete</button>
+            </div>
+          `;
+          usersTable.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    }
+
+    // Edit user (tutor)
+    async function editUser(userId) {
+      const username = prompt('Enter new username:');
+      const email = prompt('Enter new email:');
+      if (username && email) {
+        try {
+          const response = await fetch(`/admin/manage-users/${userId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, email })
+          });
+          const result = await response.json();
+          alert(result.message);
+          fetchUsers();
+        } catch (error) {
+          console.error('Error editing user:', error);
+        }
+      }
+    }
+
+    // Delete user (tutor)
+    async function deleteUser(userId) {
+      if (confirm('Are you sure you want to delete this user?')) {
+        try {
+          const response = await fetch(`/admin/manage-users/${userId}`, {
+            method: 'DELETE'
+          });
+          const result = await response.json();
+          alert(result.message);
+          fetchUsers();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchUsers);
+  </script>
+</body>
+</html>

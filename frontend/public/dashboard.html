@@ -1,34 +1,121 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <title>Dashboard - Student Account Creation</title>
 </head>
 <body>
     <div class="dashboard-container">
-        <h1>Welcome to your dashboard!</h1>
-        <p>This is where you can view your information.</p>
+        <h1>Welcome to Your Dashboard!</h1>
+        <p>Manage student information and accounts below.</p>
         <button class="primary-button" onclick="window.location.href='profile.html'">Edit Profile</button>
         <a href="#" class="logout-link" onclick="logout(); return false;">Logout</a>
-        
+
         <div class="create-account-section">
             <h2>Create Student Account</h2>
             <form id="createStudentForm">
-                <label for="studentEmail">Student Email</label>
-                <input type="email" id="studentEmail" placeholder="Enter student email" required>
-                
-                <label for="studentPassword">Student Password</label>
-                <input type="password" id="studentPassword" placeholder="Enter student password" required>
-                
+                <!-- Student Information Section -->
+                <h3>Student Information</h3>
+
+                <div class="form-group">
+                    <label for="studentName">Student Full Name</label>
+                    <input type="text" id="studentName" placeholder="Enter student's full name" required>
+                    <span class="tooltip-error" id="studentNameError">Full name is required</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentDOB">Date of Birth</label>
+                    <input type="date" id="studentDOB" required>
+                    <span class="tooltip-error" id="studentDOBError">Please select a valid date</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentGrade">Grade</label>
+                    <select id="studentGrade" required>
+                        <option value="">Select Grade</option>
+                        <option value="1">1st Grade</option>
+                        <option value="2">2nd Grade</option>
+                        <option value="3">3rd Grade</option>
+                        <option value="4">4th Grade</option>
+                        <option value="5">5th Grade</option>
+                    </select>
+                    <span class="tooltip-error" id="studentGradeError">Please select a grade</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentSchool">School Name</label>
+                    <input type="text" id="studentSchool" placeholder="Enter school name" required>
+                    <span class="tooltip-error" id="studentSchoolError">School name is required</span>
+                </div>
+
+                <!-- Guardian Information Section -->
+                <h3>Guardian Information</h3>
+
+                <div class="form-group">
+                    <label for="guardianName">Guardian Full Name</label>
+                    <input type="text" id="guardianName" placeholder="Enter guardian's full name" required>
+                    <span class="tooltip-error" id="guardianNameError">Guardian name is required</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="guardianEmail">Guardian Email</label>
+                    <input type="email" id="guardianEmail" placeholder="Enter guardian email" required>
+                    <span class="tooltip-error" id="guardianEmailError">Invalid email format</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="guardianPhone">Guardian Phone Number</label>
+                    <input type="tel" id="guardianPhone" placeholder="Enter guardian's phone number" required>
+                    <span class="tooltip-error" id="guardianPhoneError">Invalid phone number</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="relationship">Relationship to Student</label>
+                    <select id="relationship" required>
+                        <option value="">Select relationship</option>
+                        <option value="mother">Mother</option>
+                        <option value="father">Father</option>
+                        <option value="guardian">Guardian</option>
+                    </select>
+                    <span class="tooltip-error" id="relationshipError">Please select a relationship</span>
+                </div>
+
+                <!-- Account Details Section -->
+                <h3>Account Details</h3>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter a username for the account" required>
+                    <span class="tooltip-error" id="usernameError">Username is required</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentEmail">Student's email</label>
+                    <input type="email" id="studentEmail" placeholder="Enter student email" required>
+                    <span class="tooltip-error" id="studentEmailError">Invalid email format</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentPassword">Create Password</label>
+                    <input type="password" id="studentPassword" placeholder="Enter password" required>
+                    <span class="tooltip-error" id="passwordError">Password must be at least 8 characters, contain a letter, a number, and a special character</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                    <span class="tooltip-error" id="confirmPasswordError">Passwords do not match</span>
+                </div>
+
                 <button class="primary-button" type="submit">Create Student Account</button>
             </form>
         </div>
 
-        <p>Need to create an account for a teacher? <a href="register.html" class="secondary-link">Register account here for teacher</a></p>
+        <p>Need to create an account for a teacher? <a href="register.html" class="secondary-link">Register teacher account here</a></p>
     </div>
 
-    <script src="app.js"></script>
+    <script src="student_dashboard.js"></script>
 </body>
 </html>

@@ -1,34 +1,60 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Handle registration form submission
-    const registerForm = document.getElementById('registerForm');
-    if (registerForm) {
-        registerForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle student account creation form submission
+    const createStudentForm = document.getElementById('createStudentForm');
+    if (createStudentForm) {
+        createStudentForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent traditional form submission
 
-            fetch('http://localhost:3000/register', {
+            // Collect student details from the form fields
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('studentEmail').value;
+            const password = document.getElementById('studentPassword').value;
+            const studentName = document.getElementById('studentName').value;
+            const studentDOB = document.getElementById('studentDOB').value;
+            const studentGrade = document.getElementById('studentGrade').value;
+            const studentSchool = document.getElementById('studentSchool').value;
+
+            // Collect guardian details from the form fields
+            const guardianName = document.getElementById('guardianName').value;
+            const guardianEmail = document.getElementById('guardianEmail').value;
+            const guardianPhone = document.getElementById('guardianPhone').value;
+            const relationship = document.getElementById('relationship').value;
+
+            // Make a POST request to the server to create the student account
+            fetch('/tutors/create-student', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password,
+                    studentName,
+                    studentDOB,
+                    studentGrade,
+                    studentSchool,
+                    guardianName,
+                    guardianEmail,
+                    guardianPhone,
+                    relationship
+                })
             })
             .then(async response => {
-                const data = await response.json();
-                console.log('Response Status:', response.status); // Log the status code
-                console.log('Response Data:', data); // Log the response data for debugging
+                const data = await response.json(); // Parse the JSON response
+                console.log('Response Status:', response.status); // Log the status code for debugging
+                console.log('Response Data:', data); // Log the response data
+
                 if (response.ok) { // Check if the response status is OK (200-299)
-                    alert(data.message); // Show the success message
-                    window.location.href = 'login.html'; // Redirect to login page after successful registration
+                    alert(data.message); // Show success message
+                    document.getElementById('createStudentForm').reset(); // Clear the form
                 } else {
-                    alert('Registration failed: ' + data.message); // Show the error message
+                    alert('Error creating student account: ' + data.message); // Show the error message
                 }
             })
             .catch(error => {
                 console.error('Fetch Error:', error); // Log any fetch errors
-                alert('An error occurred: ' + error.message); // Show the error message
+                alert('An error occurred: ' + error.message); // Show a general error message
             });
         });
     }
@@ -36,18 +62,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle login form submission
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        loginForm.addEventListener('submit', function (event) {
+        loginForm.addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the form from submitting the traditional way
 
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
-            fetch('http://localhost:3000/login', {
+            fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }), // Send email and password as JSON
+                body: JSON.stringify({ email, password }) // Send email and password as JSON
             })
             .then(async response => {
                 try {
@@ -59,75 +85,34 @@ document.addEventListener('DOMContentLoaded', function () {
                         alert(data.message); // Show "Login successful"
                         window.location.href = 'dashboard.html'; // Redirect to dashboard
                     } else {
-                        // Handle login failure (e.g., wrong password, user not found)
                         alert('Login failed: ' + data.message); // Show the error message
                     }
                 } catch (error) {
-                    // Handle any unexpected errors during JSON parsing or network issues
                     console.error('Error parsing response:', error);
                     alert('An error occurred while processing your request. Please try again.');
                 }
             })
             .catch(error => {
-                // Handle any fetch errors (e.g., network issues)
                 console.error('Fetch Error:', error);
                 alert('A network error occurred. Please try again.');
             });
         });
     }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Assume we fetch student data from a server-side API
+    // Fetch student details and populate the dashboard
     fetch('/api/student/details')
     .then(response => response.json())
     .then(data => {
         document.getElementById('studentName').textContent = data.name;
-        // Populate activities or other dashboard elements
+        // Populate other elements if needed
     })
     .catch(error => console.log('Error fetching student data:', error));
 
     // Logout functionality
     window.logout = function() {
-        fetch('/api/logout', { method: 'POST' })
+        fetch('/logout', { method: 'POST' })
         .then(() => window.location.href = '/index.html')
         .catch(error => console.error('Logout failed:', error));
     }
 });
-
-function logout() {
-    fetch('/logout', {
-        method: 'POST'
-    })
-    .then(response => {
-        if (response.redirected) {
-            window.location.href = response.url;
-        }
-    })
-    .catch(error => console.error('Logout failed:', error));
-}
-document.getElementById('createStudentForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const email = document.getElementById('studentEmail').value;
-    const password = document.getElementById('studentPassword').value;
-
-    fetch('/tutors/create-student', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        if (data.message === 'Student account created successfully') {
-            // Clear the form after successful creation
-            document.getElementById('studentEmail').value = '';
-            document.getElementById('studentPassword').value = '';
-        }
-    })
-    .catch(error => console.error('Error:', error));
-});
-
 
