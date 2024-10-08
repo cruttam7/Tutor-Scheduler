@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const nodemailer = require('nodemailer');
 
 // Initialize the express app
 const app = express();
@@ -222,6 +223,8 @@ app.post('/logout', (req, res) => {
 });
 
 // Route to register a new tutor (admin only)
+const crypto = require('crypto');  // To generate the random token
+
 app.post('/admin/register-tutor', adminAuth, async (req, res) => {
     const {
         firstName, lastName, email, phone, address, subjects, qualifications,
@@ -235,8 +238,15 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
             return res.status(400).json({ message: 'Email or username already registered.' });
         }
 
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
+        // Auto-generate a random password
+        const generatedPassword = crypto.randomBytes(6).toString('hex');  // Generates a 12-character password
+
+        // Hash the generated password before saving to the database
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+        // Create a secure token and expiration time for the password reset
+        const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
+        const resetExpires = Date.now() + 1 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
 
         // Create new tutor (role: 'tutor')
         const tutor = new User({
@@ -293,6 +303,57 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
         res.status(500).json({ message: 'Error registering tutor' });
     }
 });
+
+ 
+ app.post('/tutors/change-password/:token', async (req, res) => {
+  try {
+    // Destructure the current and new passwords from the request body
+    const { currentPassword, newPassword } = req.body;
+
+    // Find the tutor by reset token and ensure the token is still valid (not expired)
+    const tutor = await User.findOne({
+      resetPasswordToken: req.params.token,  // Use the token instead of the ID
+      resetPasswordExpires: { $gt: Date.now() }  // Ensure the token hasn't expired
+    });
+
+    if (!tutor) {
+      return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+    }
+
+    // Validate the current password
+    const isMatch = await bcrypt.compare(currentPassword, tutor.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+
+    // Hash the new password and update it
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    tutor.password = hashedNewPassword;
+
+    // Invalidate the token by clearing it and its expiration
+    tutor.resetPasswordToken = undefined;
+    tutor.resetPasswordExpires = undefined;
+
+    // Save the updated tutor details
+    await tutor.save();
+
+    res.status(200).json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Error updating password:', error.message);  // Detailed error logging
+    res.status(500).json({ message: 'Error updating password. Please try again later.' });
+  }
+});
+ 
+   // Configure your email transporter
+   const transporter = nodemailer.createTransport({
+     service: 'gmail', // You can use other services like SendGrid, Outlook, etc.
+     auth: {
+       user: 'uttam.dhakal777@gmail.com', // Use your email
+       pass: 'iuja qjii ujva wkev'   // Use your email password or App-specific password
+     }
+   });
+   
+
 // Route to get quick stats for the admin dashboard
 app.get('/admin/stats', adminAuth, async (req, res) => {
     try {
