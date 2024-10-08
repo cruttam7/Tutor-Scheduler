@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
+const nodemailer = require('nodemailer');
+ 
 
 // Initialize the express app
 const app = express();
@@ -16,6 +18,8 @@ app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 // Middleware setup to parse JSON request bodies
 app.use(bodyParser.json());
+
+
 
 // Add session middleware to the app (MUST be before routes)
 app.use(session({
@@ -221,49 +225,175 @@ app.post('/logout', (req, res) => {
   }
 });
 
-// Route to register a new tutor (admin only)
+const crypto = require('crypto');  // To generate the random token
+
 app.post('/admin/register-tutor', adminAuth, async (req, res) => {
-  const {
-      firstName, lastName, email, phone, address, subjects, qualifications,
-      experience, bio, rate, username, password
-  } = req.body;
+    const {
+        firstName, lastName, email, phone, address, subjects, qualifications,
+        experience, bio, rate, username
+    } = req.body;
 
+    try {
+        // Check if the email or username is already registered
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email or username already registered.' });
+        }
+
+        // Auto-generate a random password
+        const generatedPassword = crypto.randomBytes(6).toString('hex');  // Generates a 12-character password
+
+        // Hash the generated password before saving to the database
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+        // Create a secure token and expiration time for the password reset
+        const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
+        const resetExpires = Date.now() + 2 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
+
+        // Create new tutor (role: 'tutor')
+        const tutor = new User({
+            username,
+            email,
+            password: hashedPassword,  // Store the hashed password
+            role: 'tutor',
+            firstName,
+            lastName,
+            phone,
+            address,
+            subjects: subjects.split(',').map(subject => subject.trim()),  // Convert the subjects into an array
+            qualifications,
+            experience,
+            bio,
+            rate,
+            resetPasswordToken: resetToken,  // Store the reset token
+            resetPasswordExpires: resetExpires  // Store the expiration time
+        });
+
+        // Save the tutor to the database
+        await tutor.save();
+
+        // Send email to the tutor with the auto-generated password and link to change the password
+        const changePasswordLink = `http://localhost:3000/change-password-tutor.html?token=${resetToken}`;
+
+        const mailOptions = {
+            from: 'your-email@gmail.com',
+            to: tutor.email,
+            subject: 'Welcome! Your Account Details',
+            text: `Hello ${tutor.firstName},\n\nYou have been registered as a tutor on our platform.\n\n` +
+                `Here are your account details:\n\n` +
+                `Username: ${tutor.username}\n` +
+                `Temporary Password: ${generatedPassword}\n\n` +  // Send the auto-generated password in the email
+                `Please use the following link to change your password (valid for 1 minute):\n\n${changePasswordLink}\n\n` +
+                `You will be required to enter your current password (the temporary password provided above), and then choose a new password.\n\n` +
+                `Thank you for joining us!`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log('Error sending email:', error);
+                return res.status(500).json({ message: 'Error sending email' });
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+
+        // Admin does not see the password, so only a success message is returned
+        res.status(201).json({ message: 'Tutor registered successfully. An email has been sent with account details.' });
+
+    } catch (err) {
+        console.error('Error registering tutor:', err.message);
+        res.status(500).json({ message: 'Error registering tutor' });
+    }
+});
+
+ 
+ app.post('/tutors/change-password/:token', async (req, res) => {
   try {
-      // Check if the email or username already exists
-      const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-      if (existingUser) {
-          return res.status(400).json({ message: 'Email or username already registered.' });
-      }
+    // Destructure the current and new passwords from the request body
+    const { currentPassword, newPassword } = req.body;
 
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
+    // Find the tutor by reset token and ensure the token is still valid (not expired)
+    const tutor = await User.findOne({
+      resetPasswordToken: req.params.token,  // Use the token instead of the ID
+      resetPasswordExpires: { $gt: Date.now() }  // Ensure the token hasn't expired
+    });
 
-      // Create new tutor (role: 'tutor')
-      const tutor = new User({
-          username,
-          email,
-          password: hashedPassword,
-          role: 'tutor',  // Mark this user as a tutor
-          firstName,
-          lastName,
-          phone,
-          address,
-          subjects: subjects.split(',').map(subject => subject.trim()),  // Convert subjects to array
-          qualifications,
-          experience,
-          bio,
-          rate
-      });
+    if (!tutor) {
+      return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+    }
 
-      // Save the tutor to the database
-      await tutor.save();
+    // Validate the current password
+    const isMatch = await bcrypt.compare(currentPassword, tutor.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
 
-      res.status(201).json({ message: 'Tutor registered successfully' });
-  } catch (err) {
-      console.error('Error registering tutor:', err.message);
-      res.status(500).json({ message: 'Error registering tutor' });
+    // Hash the new password and update it
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    tutor.password = hashedNewPassword;
+
+    // Invalidate the token by clearing it and its expiration
+    tutor.resetPasswordToken = undefined;
+    tutor.resetPasswordExpires = undefined;
+
+    // Save the updated tutor details
+    await tutor.save();
+
+    res.status(200).json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Error updating password:', error.message);  // Detailed error logging
+    res.status(500).json({ message: 'Error updating password. Please try again later.' });
   }
 });
+
+
+ 
+ 
+   // Configure your email transporter
+   const transporter = nodemailer.createTransport({
+     service: 'gmail', // You can use other services like SendGrid, Outlook, etc.
+     auth: {
+       user: 'uttam.dhakal777@gmail.com', // Use your email
+       pass: 'iuja qjii ujva wkev'   // Use your email password or App-specific password
+     }
+   });
+   
+ 
+ // Route to get quick stats for the admin dashboard
+ app.get('/admin/stats', adminAuth, async (req, res) => {
+     try {
+         // Get the total number of tutors and students
+         const totalTutors = await User.countDocuments({ role: 'tutor' });
+         const totalStudents = await User.countDocuments({ role: 'student' });
+ 
+         // Get the 5 most recent user registrations
+         const recentRegistrations = await User.find()
+             .sort({ createdAt: -1 })
+             .limit(5)
+             .select('username role email');
+ 
+         res.status(200).json({
+             totalTutors,
+             totalStudents,
+             recentRegistrations
+         });
+     } catch (error) {
+         console.error('Error fetching stats:', error.message);
+         res.status(500).json({ message: 'Error fetching stats' });
+     }
+ });
+ // Admin information route
+ app.get('/admin/info', (req, res) => {
+   if (req.session && req.session.admin) {
+     res.status(200).json({
+       username: req.session.admin.username,
+       email: req.session.admin.email
+     });
+   } else {
+     res.status(403).json({ message: 'Not authorized' });
+   }
+ });
+
 // Route to get quick stats for the admin dashboard
 app.get('/admin/stats', adminAuth, async (req, res) => {
     try {

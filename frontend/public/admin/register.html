@@ -49,12 +49,6 @@
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required><br>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-
-        <label for="confirmPassword">Confirm Password:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required><br>
-
         <button type="submit">Register Tutor</button>
     </form>
 
@@ -76,16 +70,10 @@
                 experience: document.getElementById('experience').value,
                 bio: document.getElementById('bio').value,
                 rate: document.getElementById('rate').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-                confirmPassword: document.getElementById('confirmPassword').value,
+                username: document.getElementById('username').value
             };
 
-            if (formData.password !== formData.confirmPassword) {
-                document.getElementById('message').textContent = 'Passwords do not match!';
-                return;
-            }
-
+            // Send a POST request to register the tutor
             const response = await fetch('/admin/register-tutor', {
                 method: 'POST',
                 headers: {
