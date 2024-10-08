@@ -5,8 +5,6 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
-const nodemailer = require('nodemailer');
- 
 
 // Initialize the express app
 const app = express();
@@ -18,8 +16,6 @@ app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 // Middleware setup to parse JSON request bodies
 app.use(bodyParser.json());
-
-
 
 // Add session middleware to the app (MUST be before routes)
 app.use(session({
@@ -225,8 +221,7 @@ app.post('/logout', (req, res) => {
   }
 });
 
-const crypto = require('crypto');  // To generate the random token
-
+// Route to register a new tutor (admin only)
 app.post('/admin/register-tutor', adminAuth, async (req, res) => {
     const {
         firstName, lastName, email, phone, address, subjects, qualifications,
@@ -240,15 +235,8 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
             return res.status(400).json({ message: 'Email or username already registered.' });
         }
 
-        // Auto-generate a random password
-        const generatedPassword = crypto.randomBytes(6).toString('hex');  // Generates a 12-character password
-
-        // Hash the generated password before saving to the database
-        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-        // Create a secure token and expiration time for the password reset
-        const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
-        const resetExpires = Date.now() + 2 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new tutor (role: 'tutor')
         const tutor = new User({
@@ -305,95 +293,6 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
         res.status(500).json({ message: 'Error registering tutor' });
     }
 });
-
- 
- app.post('/tutors/change-password/:token', async (req, res) => {
-  try {
-    // Destructure the current and new passwords from the request body
-    const { currentPassword, newPassword } = req.body;
-
-    // Find the tutor by reset token and ensure the token is still valid (not expired)
-    const tutor = await User.findOne({
-      resetPasswordToken: req.params.token,  // Use the token instead of the ID
-      resetPasswordExpires: { $gt: Date.now() }  // Ensure the token hasn't expired
-    });
-
-    if (!tutor) {
-      return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
-    }
-
-    // Validate the current password
-    const isMatch = await bcrypt.compare(currentPassword, tutor.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect.' });
-    }
-
-    // Hash the new password and update it
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    tutor.password = hashedNewPassword;
-
-    // Invalidate the token by clearing it and its expiration
-    tutor.resetPasswordToken = undefined;
-    tutor.resetPasswordExpires = undefined;
-
-    // Save the updated tutor details
-    await tutor.save();
-
-    res.status(200).json({ message: 'Password updated successfully.' });
-  } catch (error) {
-    console.error('Error updating password:', error.message);  // Detailed error logging
-    res.status(500).json({ message: 'Error updating password. Please try again later.' });
-  }
-});
-
-
- 
- 
-   // Configure your email transporter
-   const transporter = nodemailer.createTransport({
-     service: 'gmail', // You can use other services like SendGrid, Outlook, etc.
-     auth: {
-       user: 'uttam.dhakal777@gmail.com', // Use your email
-       pass: 'iuja qjii ujva wkev'   // Use your email password or App-specific password
-     }
-   });
-   
- 
- // Route to get quick stats for the admin dashboard
- app.get('/admin/stats', adminAuth, async (req, res) => {
-     try {
-         // Get the total number of tutors and students
-         const totalTutors = await User.countDocuments({ role: 'tutor' });
-         const totalStudents = await User.countDocuments({ role: 'student' });
- 
-         // Get the 5 most recent user registrations
-         const recentRegistrations = await User.find()
-             .sort({ createdAt: -1 })
-             .limit(5)
-             .select('username role email');
- 
-         res.status(200).json({
-             totalTutors,
-             totalStudents,
-             recentRegistrations
-         });
-     } catch (error) {
-         console.error('Error fetching stats:', error.message);
-         res.status(500).json({ message: 'Error fetching stats' });
-     }
- });
- // Admin information route
- app.get('/admin/info', (req, res) => {
-   if (req.session && req.session.admin) {
-     res.status(200).json({
-       username: req.session.admin.username,
-       email: req.session.admin.email
-     });
-   } else {
-     res.status(403).json({ message: 'Not authorized' });
-   }
- });
-
 // Route to get quick stats for the admin dashboard
 app.get('/admin/stats', adminAuth, async (req, res) => {
     try {
@@ -452,36 +351,6 @@ app.get('/admin/stats', adminAuth, async (req, res) => {
       res.status(500).json({ message: 'Error fetching stats' });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-//reql time users
-
-// Fetch real-time user data for chart
-app.get('/admin/realtime-users', adminAuth, async (req, res) => {
-  try {
-    const userData = {
-      students: Math.floor(Math.random() * 100) + 1, // Random value between 1 and 100
-      tutors: Math.floor(Math.random() * 50) + 1    // Random value between 1 and 50
-    };
-    res.status(200).json(userData);
-  } catch (error) {
-    console.error('Error fetching real-time users:', error.message);
-    res.status(500).json({ message: 'Error fetching real-time users' });
-  }
-});
-
-  
 
 
 // Define the /login route for tutor login
@@ -645,91 +514,6 @@ app.get('/dashboard', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
-
-//new one
-const jwt = require('jsonwebtoken');
-
-// Middleware to check if authenticated
-function verifyToken(req, res, next) {
-  const token = req.header('Authorization')?.split(' ')[1]; // Assuming Bearer Token format
-  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
-
-  try {
-    const decoded = jwt.verify(token, 'your_jwt_secret');  // Replace with your JWT secret
-    req.user = decoded; // Attach user info to the request
-    next();
-  } catch (error) {
-    res.status(400).json({ message: 'Invalid token.' });
-  }
-}
-
-
-
-
-
-
-// new data for the admin dasjboard
-
-// Middleware to parse JSON bodies (needed for POST requests)
-app.use(express.json());
-
-// Admin details (you can store this in a database for production)
-const adminUsername = 'admin';
-const adminEmail = 'uttam.dhakal777@gmail.com';
-let adminPasswordHash;  // This will store the hashed password
-
-// Set the admin password (this should be done securely)
-const setAdminPassword = async (password) => {
-  adminPasswordHash = await bcrypt.hash(password, 10);  // Hash the password with bcrypt
-};
-
-// Set the password during server startup
-setAdminPassword('Ron@ldo777');  // Replace with the real password
-
-// Route to authenticate the admin
-app.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;  // Get email and password from the request body
-
-  // Check if the email matches
-  if (email !== adminEmail) {
-    return res.status(401).json({ message: 'Unauthorized: Incorrect email' });
-  }
-
-  // Check if the password matches using bcrypt
-  const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
-  if (!passwordMatch) {
-    return res.status(401).json({ message: 'Unauthorized: Incorrect password' });
-  }
-
-  // Authentication successful
-  res.status(200).json({ message: 'Login successful', username: adminUsername });
-});
-
-// Other routes...
-app.get('/admin/info', (req, res) => {
-  const adminInfo = {
-    username: adminUsername,
-    email: adminEmail
-  };
-  res.json(adminInfo);
-});
-
-app.get('/admin/stats', (req, res) => {
-  const stats = {
-    totalTutors: 50,
-    totalStudents: 200
-  };
-  res.json(stats);
-});
-
-app.get('/admin/realtime-users', (req, res) => {
-  const userData = {
-    students: Math.floor(Math.random() * 100),
-    tutors: Math.floor(Math.random() * 50)
-  };
-  res.json(userData);
-});
-
 
 // Start the server
 const port = 3000;
