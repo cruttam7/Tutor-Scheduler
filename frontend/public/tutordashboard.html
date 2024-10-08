@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        /* General reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #333;
+        }
+
+        /* Action Cards */
+        .action-cards {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            color: #2b7a78;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        /* Calendar Section */
+        .calendar-section {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-section h2 {
+            font-size: 1.8rem;
+            color: #2b7a78;
+            margin-bottom: 20px;
+        }
+
+        #calendar {
+            height: 400px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Upcoming Sessions Section */
+        .upcoming-sessions {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upcoming-sessions h2 {
+            font-size: 1.8rem;
+            color: #2b7a78;
+            margin-bottom: 20px;
+        }
+
+        #sessions-list {
+            font-size: 1rem;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Attendance Section */
+        .attendance-section {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-section h2 {
+            font-size: 1.8rem;
+            color: #2b7a78;
+            margin-bottom: 20px;
+        }
+
+        #attendance-list {
+            font-size: 1rem;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .action-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 90%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Teacher Dashboard</h1>
+        </header>
+
+        <section class="action-cards">
+            <div class="card" onclick="createSession()">
+                <h3>Create New Session</h3>
+                <p>Organize a new tutoring session with your students.</p>
+            </div>
+            <div class="card" onclick="viewUpcomingSessions()">
+                <h3>Upcoming Sessions</h3>
+                <p>View your scheduled sessions.</p>
+            </div>
+            <div class="card" onclick="markAttendance()">
+                <h3>Mark Attendance</h3>
+                <p>Track and update student attendance.</p>
+            </div>
+        </section>
+
+        <section class="calendar-section">
+            <h2>Calendar</h2>
+            <div id="calendar">
+                <!-- FullCalendar can be integrated here -->
+                <p>Calendar coming soon...</p>
+            </div>
+        </section>
+
+        <section class="upcoming-sessions">
+            <h2>Upcoming Sessions</h2>
+            <div id="sessions-list">
+                <!-- Dynamic list of sessions will be rendered here -->
+                <p>No upcoming sessions yet.</p>
+            </div>
+        </section>
+
+        <section class="attendance-section">
+            <h2>Attendance</h2>
+            <div id="attendance-list">
+                <!-- Attendance details will be rendered here -->
+                <p>No attendance data available yet.</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Client-side actions for the dashboard
+
+        // Placeholder function for creating a new session
+        function createSession() {
+            alert("Create a new session clicked!");
+            // Logic for creating a session (e.g., opening a modal or redirecting to a new form)
+        }
+
+        // Function to fetch and display upcoming sessions
+        function viewUpcomingSessions() {
+            const sessionsList = document.getElementById('sessions-list');
+            // Simulated fetch request to get sessions (replace with actual API call)
+            const sessions = [
+                { subject: "Math", date: "2024-10-12", time: "10:00 AM" },
+                { subject: "Science", date: "2024-10-14", time: "2:00 PM" },
+            ];
+
+            if (sessions.length > 0) {
+                sessionsList.innerHTML = sessions.map(session => `
+                    <div class="session-item">
+                        <p><strong>${session.subject}</strong> - ${session.date} at ${session.time}</p>
+                    </div>
+                `).join('');
+            } else {
+                sessionsList.innerHTML = "<p>No upcoming sessions found.</p>";
+            }
+        }
+
+        // Function to simulate marking attendance
+        function markAttendance() {
+            const attendanceList = document.getElementById('attendance-list');
+            // Simulated data for student attendance (replace with actual data)
+            const attendanceData = [
+                { student: "John Doe", status: "Present" },
+                { student: "Jane Smith", status: "Absent" },
+            ];
+
+            if (attendanceData.length > 0) {
+                attendanceList.innerHTML = attendanceData.map(attendance => `
+                    <div class="attendance-item">
+                        <p>${attendance.student}: ${attendance.status}</p>
+                    </div>
+                `).join('');
+            } else {
+                attendanceList.innerHTML = "<p>No attendance data available.</p>";
+            }
+        }
+
+        // Automatically fetch and display upcoming sessions on page load
+        window.onload = function() {
+            viewUpcomingSessions();
+        };
+    </script>
+</body>
+</html>

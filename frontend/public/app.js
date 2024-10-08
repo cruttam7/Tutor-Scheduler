@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (response.ok) { // Login was successful (status code 200-299)
                         alert(data.message); // Show "Login successful"
-                        window.location.href = 'dashboard.html'; // Redirect to dashboard
+                        window.location.href = 'tutordashboard.html'; // Redirect to dashboard
                     } else {
                         alert('Login failed: ' + data.message); // Show the error message
                     }
@@ -107,6 +107,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // Populate other elements if needed
     })
     .catch(error => console.log('Error fetching student data:', error));
+
+// to show password
+
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#loginPassword');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // Toggle the eye slash icon
+        this.classList.toggle('fa-eye-slash');
+    });
+
+
 
     // Logout functionality
     window.logout = function() {

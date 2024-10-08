@@ -7,19 +7,49 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <h1>Admin Login</h1>
 
-    <form id="adminLoginForm">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
 
-        <button type="submit">Login</button>
-    </form>
+    <div class="login-container">
+        <div class="form-box">
+            <h1>Admin Login</h1>
+    
+            <form id="adminLoginForm">
+                <!-- Email Input with Placeholder -->
+                <input type="email" id="email" name="email" placeholder="Email" required><br>
+    
+                <!-- Password Input with Placeholder -->
+                <input type="password" id="password" name="password" placeholder="Password" required><br>
+    
+                <!-- Login Button -->
+                <button type="submit">Login</button>
+            </form>
+    
+            <div id="message"></div>
+        </div>
+    </div>
+    
 
-    <div id="message"></div>
+
+
+
+
+
+   <!-- Enhanced Modal for displaying messages -->
+   <div id="messageModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close">&times;</span>
+         
+        </div>
+        <div class="modal-body">
+            <p id="messageText"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="closeBtn">Try Agian</button>
+        </div>
+    </div>
+</div>
 
     <script>
         // Handle form submission
@@ -39,15 +69,35 @@
 
             const result = await response.json();
             
-            // Display the message
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = result.message;
+            // Display the message in the modal
+            const modal = document.getElementById('messageModal');
+            const messageText = document.getElementById('messageText');
+            messageText.textContent = result.message;
+            modal.style.display = "block";
 
             if (response.ok) {
-                // Redirect to the dashboard on successful login
+                messageText.textContent = "Login Successful!";
+                messageText.style.color = "green";
                 window.location.href = '/admin/dashboard';
+            } else {
+                messageText.textContent = "Login Unsuccessful";
+                messageText.style.color = "red";
             }
         });
+
+        // Close the modal when the user clicks the close button
+        document.querySelector(".close").addEventListener("click", function() {
+            document.getElementById("messageModal").style.display = "none";
+        });
+
+        // Close the modal if the user clicks anywhere outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('messageModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    
     </script>
 </body>
 </html>

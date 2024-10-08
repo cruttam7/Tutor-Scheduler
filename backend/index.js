@@ -324,6 +324,36 @@ app.get('/admin/stats', adminAuth, async (req, res) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+//reql time users
+
+// Fetch real-time user data for chart
+app.get('/admin/realtime-users', adminAuth, async (req, res) => {
+  try {
+    const userData = {
+      students: Math.floor(Math.random() * 100) + 1, // Random value between 1 and 100
+      tutors: Math.floor(Math.random() * 50) + 1    // Random value between 1 and 50
+    };
+    res.status(200).json(userData);
+  } catch (error) {
+    console.error('Error fetching real-time users:', error.message);
+    res.status(500).json({ message: 'Error fetching real-time users' });
+  }
+});
+
+  
+
+
 // Define the /login route for tutor login
 app.post('/login', async (req, res) => {
   try {
@@ -485,6 +515,91 @@ app.get('/dashboard', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
+
+//new one
+const jwt = require('jsonwebtoken');
+
+// Middleware to check if authenticated
+function verifyToken(req, res, next) {
+  const token = req.header('Authorization')?.split(' ')[1]; // Assuming Bearer Token format
+  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+
+  try {
+    const decoded = jwt.verify(token, 'your_jwt_secret');  // Replace with your JWT secret
+    req.user = decoded; // Attach user info to the request
+    next();
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid token.' });
+  }
+}
+
+
+
+
+
+
+// new data for the admin dasjboard
+
+// Middleware to parse JSON bodies (needed for POST requests)
+app.use(express.json());
+
+// Admin details (you can store this in a database for production)
+const adminUsername = 'admin';
+const adminEmail = 'uttam.dhakal777@gmail.com';
+let adminPasswordHash;  // This will store the hashed password
+
+// Set the admin password (this should be done securely)
+const setAdminPassword = async (password) => {
+  adminPasswordHash = await bcrypt.hash(password, 10);  // Hash the password with bcrypt
+};
+
+// Set the password during server startup
+setAdminPassword('Ron@ldo777');  // Replace with the real password
+
+// Route to authenticate the admin
+app.post('/admin/login', async (req, res) => {
+  const { email, password } = req.body;  // Get email and password from the request body
+
+  // Check if the email matches
+  if (email !== adminEmail) {
+    return res.status(401).json({ message: 'Unauthorized: Incorrect email' });
+  }
+
+  // Check if the password matches using bcrypt
+  const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
+  if (!passwordMatch) {
+    return res.status(401).json({ message: 'Unauthorized: Incorrect password' });
+  }
+
+  // Authentication successful
+  res.status(200).json({ message: 'Login successful', username: adminUsername });
+});
+
+// Other routes...
+app.get('/admin/info', (req, res) => {
+  const adminInfo = {
+    username: adminUsername,
+    email: adminEmail
+  };
+  res.json(adminInfo);
+});
+
+app.get('/admin/stats', (req, res) => {
+  const stats = {
+    totalTutors: 50,
+    totalStudents: 200
+  };
+  res.json(stats);
+});
+
+app.get('/admin/realtime-users', (req, res) => {
+  const userData = {
+    students: Math.floor(Math.random() * 100),
+    tutors: Math.floor(Math.random() * 50)
+  };
+  res.json(userData);
+});
+
 
 // Start the server
 const port = 3000;

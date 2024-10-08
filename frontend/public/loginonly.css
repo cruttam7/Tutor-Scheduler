@@ -32,7 +32,7 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 400px; /* Prevent the form from being too wide */
-    width: 100%;
+    width: 70%;
 }
 
 /* Form Heading */
@@ -92,3 +92,17 @@ button[type="submit"]:focus {
     font-size: 14px;
     margin-top: 10px;
 }
+/* Positioning the eye icon inside the input field */
+.password-container .toggle-password {
+    position: absolute;
+    top: 50%;  /* Vertically center the icon */
+    right: 10px;  /* Align the icon to the right */
+    transform: translateY(-50%);  /* Adjust to properly center it vertically */
+    cursor: pointer;
+    font-size: 18px;
+    color: #888;
+}
+
+/* Hover effect for the icon */
+.password-container .toggle-password:hover {
+    color: #333;}
