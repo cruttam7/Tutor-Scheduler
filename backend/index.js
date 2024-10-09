@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const session = require('express-session');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 // Initialize the express app
 const app = express();
@@ -63,13 +64,13 @@ app.post('/admin/login', async (req, res) => {
       // Check if the admin exists with the normalized email
       const admin = await Admin.findOne({ email });
       if (!admin) {
-          return res.status(400).json({ message: 'Admin not found' });
+          return res.status(404).json({ message: 'Admin not found. Please check the email address.' });
       }
 
       // Compare the provided password with the hashed password in the database
       const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
+          return res.status(401).json({ message: 'Invalid credentials. Please try again.' });
       }
 
       // If login is successful, create a session for the admin
@@ -79,14 +80,14 @@ app.post('/admin/login', async (req, res) => {
           email: admin.email
       };
 
-      res.status(200).json({ message: 'Admin login successful' });
+      res.status(200).json({ message: 'Login successful. Redirecting to dashboard.' });
   } catch (err) {
       console.error('Error logging in admin:', err.message);
-      res.status(500).json({ message: 'Error logging in admin' });
+      res.status(500).json({ message: 'Internal server error. Please try again later.' });
   }
 });
 
-    
+
 // Middleware to protect admin routes
 const adminAuth = (req, res, next) => {
   if (req.session && req.session.admin) {
@@ -223,7 +224,6 @@ app.post('/logout', (req, res) => {
 });
 
 // Route to register a new tutor (admin only)
-const crypto = require('crypto');  // To generate the random token
 
 app.post('/admin/register-tutor', adminAuth, async (req, res) => {
     const {
@@ -413,6 +413,112 @@ app.get('/admin/stats', adminAuth, async (req, res) => {
   }
 });
 
+// Forgot password route for Admin 
+app.post('/admin/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+      // Find the admin by email
+      const admin = await Admin.findOne({ email });
+      if (!admin) {
+          return res.status(400).json({ message: 'Admin not found.' });
+      }
+
+      // Generate a reset token and set expiration time
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = Date.now() + 15 * 60 * 1000;  // 15-minute expiration
+
+      // Add debug logging to confirm token generation
+      console.log(`Generated reset token: ${resetToken}`);
+      console.log(`Token expiration time: ${new Date(resetExpires).toLocaleString()}`);
+
+      // Update the admin with the token and expiration
+      admin.resetPasswordToken = resetToken;
+      admin.resetPasswordExpires = resetExpires;
+
+      // Save the admin with the new token and expiration
+      await admin.save();  // This is where the token is saved to the database
+
+      console.log('Admin document updated with reset token and expiration.');
+
+      // Create the reset link
+      const resetLink = `http://localhost:3000/admin/admin-reset-password.html?token=${resetToken}`;
+
+      // Send the password reset email
+      const mailOptions = {
+          from: 'your-email@example.com',
+          to: admin.email,
+          subject: 'Password Reset Request',
+          text: `Hello,\n\nYou requested to reset your password. Please click the link below to reset it:\n\n${resetLink}\n\nThis link is valid for 15 minutes.`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+              console.log('Error sending email:', error);
+              return res.status(500).json({ message: 'Error sending reset email.' });
+          } else {
+              console.log('Email sent: ' + info.response);
+          }
+      });
+
+      res.status(200).json({ message: 'Password reset email has been sent.' });
+
+  } catch (error) {
+      console.error('Error in forgot password:', error.message);
+      res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+});
+
+
+// Password reset route for Admin submission
+app.post('/admin/reset-password/:token', async (req, res) => {
+    const { token } = req.params;  // Get the token from the URL
+    const { newPassword } = req.body;  // Get the new password from the body
+
+    console.log(`Received token: ${token}`);
+    console.log(`New password: ${newPassword}`);
+
+    try {
+        // Validate that the token exists and hasn't expired
+        const admin = await Admin.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }  // Check if the token is still valid
+        });
+
+        if (!admin) {
+            console.log('Token is invalid or expired.');
+            return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+        }
+
+        // Log that the admin was found and the token is valid
+        console.log(`Admin found: ${admin.email}`);
+
+        // Validate the new password strength
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            console.log('Password does not meet the strength requirements.');
+            return res.status(400).json({ message: 'Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character.' });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update the admin's password and clear the reset token and expiration
+        admin.password = hashedPassword;
+        admin.resetPasswordToken = undefined;
+        admin.resetPasswordExpires = undefined;
+
+        // Save the updated admin details
+        await admin.save();
+
+        console.log('Password has been successfully reset.');
+        res.status(200).json({ message: 'Password has been reset successfully.' });
+
+    } catch (error) {
+        console.error('Error during password reset:', error.message);
+        res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    }
+});
 
 // Define the /login route for tutor login
 app.post('/login', async (req, res) => {
