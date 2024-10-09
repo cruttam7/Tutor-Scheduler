@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    <style>
+        /* Global Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Main Heading */
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* Section Heading */
+        h2 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        /* Buttons for Students and Tutors Tabs */
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        /* Styling for User Tables */
+        table {
+            width: 100%;
+            max-width: 1000px;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        thead {
+            background-color: #3498db;
+            color: white;
+            font-weight: 500;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            font-size: 18px;
+        }
+
+        td {
+            font-size: 16px;
+            color: #34495e;
+        }
+
+        /* Action buttons (Edit/Delete) in each row */
+        button.edit-btn, button.delete-btn {
+            background-color: #2ecc71;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-right: 10px;
+        }
+
+        button.delete-btn {
+            background-color: #e74c3c;
+        }
+
+        button.edit-btn:hover {
+            background-color: #27ae60;
+        }
+
+        button.delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Hover effect on table rows */
+        tbody tr:hover {
+            background-color: #f4f4f4;
+        }
+
+        /* Modal Styling */
+        #editUserModal {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.6);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal Content */
+        #editUserModal .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+        }
+
+        /* Modal Form Styling */
+        #editUserModal input[type="text"],
+        #editUserModal input[type="email"],
+        #editUserModal input[type="number"],
+        #editUserModal input[type="tel"],
+        #editUserModal textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Save Changes Button */
+        #editUserModal button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        #editUserModal button[type="submit"]:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        /* Close Button for Modal */
+        #editUserModal .close-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-top: 10px;
+        }
+
+        #editUserModal .close-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        /* Responsive layout */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            table {
+                width: 90%;
+            }
+
+            #editUserModal .modal-content {
+                width: 300px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Manage Users</h1>
+
+    <!-- Tabs to switch between Students and Tutors -->
+    <div>
+        <button onclick="showSection('students')">Manage Students</button>
+        <button onclick="showSection('tutors')">Manage Tutors</button>
+    </div>
+
+    <!-- Students Section -->
+    <div id="studentsSection" style="display:none;">
+        <h2>Manage Students</h2>
+        <table id="studentsTable" border="1">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Grade</th>
+                    <th>School</th>
+                    <th>Guardian Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Student rows will be inserted dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tutors Section -->
+    <div id="tutorsSection" style="display:none;">
+        <h2>Manage Tutors</h2>
+        <table id="tutorsTable" border="1">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Subjects</th>
+                    <th>Rate</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Tutor rows will be inserted dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit User Modal (shared for both students and tutors) -->
+    <div id="editUserModal" style="display:none;">
+        <div class="modal-content">
+            <h2>Edit User</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="userId" />
+                <label>Email:</label>
+                <input type="email" id="editEmail" required /><br/>
+                
+                <!-- Fields specific to Students -->
+                <div id="studentFields" style="display: none;">
+                    <label>Student Name:</label>
+                    <input type="text" id="editStudentName" required /><br/>
+                    <label>Grade:</label>
+                    <input type="text" id="editGrade" /><br/>
+                    <label>School:</label>
+                    <input type="text" id="editSchool" /><br/>
+                    <label>Guardian Name:</label>
+                    <input type="text" id="editGuardianName" /><br/>
+                    <label>Guardian Email:</label>
+                    <input type="email" id="editGuardianEmail" /><br/>
+                    <label>Guardian Phone:</label>
+                    <input type="tel" id="editGuardianPhone" /><br/>
+                </div>
+                
+                <!-- Fields specific to Tutors -->
+                <div id="tutorFields" style="display: none;">
+                    <label>First Name:</label>
+                    <input type="text" id="editFirstName" required /><br/>
+                    <label>Last Name:</label>
+                    <input type="text" id="editLastName" required /><br/>
+                    <label>Subjects:</label>
+                    <input type="text" id="editSubjects" /><br/>
+                    <label>Rate (USD/hour):</label>
+                    <input type="number" id="editRate" /><br/>
+                </div>
+
+                <button type="submit">Save Changes</button>
+                <button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Show the relevant section
+        function showSection(section) {
+            document.getElementById('studentsSection').style.display = section === 'students' ? 'block' : 'none';
+            document.getElementById('tutorsSection').style.display = section === 'tutors' ? 'block' : 'none';
+            if (section === 'students') {
+                fetchStudents();
+            } else {
+                fetchTutors();
+            }
+        }
+
+        // Fetch Students from Backend and Display them in the Table
+        async function fetchStudents() {
+            try {
+                const response = await fetch('/admin/manage-users/students');
+                const students = await response.json();
+                const studentsTable = document.getElementById('studentsTable').getElementsByTagName('tbody')[0];
+                studentsTable.innerHTML = ''; // Clear table rows
+
+                students.forEach(student => {
+                    const row = studentsTable.insertRow();
+                    row.insertCell(0).textContent = student.studentName;
+                    row.insertCell(1).textContent = student.email;
+                    row.insertCell(2).textContent = student.studentGrade;
+                    row.insertCell(3).textContent = student.studentSchool;
+                    row.insertCell(4).textContent = student.guardianName;
+
+                    // Edit and Delete buttons
+                    const actionsCell = row.insertCell(5);
+                    const editButton = document.createElement('button');
+                    editButton.classList.add('edit-btn');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => showEditForm(student, 'student');
+                    actionsCell.appendChild(editButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteUser(student._id, 'student');
+                    actionsCell.appendChild(deleteButton);
+                });
+            } catch (error) {
+                console.error('Error fetching students:', error);
+            }
+        }
+
+        // Fetch Tutors from Backend and Display them in the Table
+        async function fetchTutors() {
+            try {
+                const response = await fetch('/admin/manage-users/tutors');
+                const tutors = await response.json();
+                const tutorsTable = document.getElementById('tutorsTable').getElementsByTagName('tbody')[0];
+                tutorsTable.innerHTML = ''; // Clear table rows
+
+                tutors.forEach(tutor => {
+                    const row = tutorsTable.insertRow();
+                    row.insertCell(0).textContent = tutor.firstName;
+                    row.insertCell(1).textContent = tutor.lastName;
+                    row.insertCell(2).textContent = tutor.email;
+                    row.insertCell(3).textContent = tutor.subjects.join(',');
+                    row.insertCell(4).textContent = tutor.rate;
+
+                    // Edit and Delete buttons
+                    const actionsCell = row.insertCell(5);
+                    const editButton = document.createElement('button');
+                    editButton.classList.add('edit-btn');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => showEditForm(tutor, 'tutor');
+                    actionsCell.appendChild(editButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteUser(tutor._id, 'tutor');
+                    actionsCell.appendChild(deleteButton);
+                });
+            } catch (error) {
+                console.error('Error fetching tutors:', error);
+            }
+        }
+
+        // Show Edit Form
+        function showEditForm(user, type) {
+            document.getElementById('editUserModal').style.display = 'block';
+            document.getElementById('userId').value = user._id;
+            document.getElementById('editEmail').value = user.email;
+
+            if (type === 'student') {
+                document.getElementById('studentFields').style.display = 'block';
+                document.getElementById('tutorFields').style.display = 'none';
+                document.getElementById('editStudentName').value = user.studentName;
+                document.getElementById('editGrade').value = user.studentGrade;
+                document.getElementById('editSchool').value = user.studentSchool;
+                document.getElementById('editGuardianName').value = user.guardianName;
+                document.getElementById('editGuardianEmail').value = user.guardianEmail;
+                document.getElementById('editGuardianPhone').value = user.guardianPhone;
+            } else if (type === 'tutor') {
+                document.getElementById('studentFields').style.display = 'none';
+                document.getElementById('tutorFields').style.display = 'block';
+                document.getElementById('editFirstName').value = user.firstName;
+                document.getElementById('editLastName').value = user.lastName;
+                document.getElementById('editSubjects').value = user.subjects.join(',');
+                document.getElementById('editRate').value = user.rate;
+            }
+        }
+
+        // Handle Edit Form Submission
+        document.getElementById('editUserForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const userId = document.getElementById('userId').value;
+            const email = document.getElementById('editEmail').value;
+
+            let updateData = { email };
+
+            if (document.getElementById('studentFields').style.display === 'block') {
+                updateData = {
+                    ...updateData,
+                    studentName: document.getElementById('editStudentName').value,
+                    studentGrade: document.getElementById('editGrade').value,
+                    studentSchool: document.getElementById('editSchool').value,
+                    guardianName: document.getElementById('editGuardianName').value,
+                    guardianEmail: document.getElementById('editGuardianEmail').value,
+                    guardianPhone: document.getElementById('editGuardianPhone').value
+                };
+            } else if (document.getElementById('tutorFields').style.display === 'block') {
+                updateData = {
+                    ...updateData,
+                    firstName: document.getElementById('editFirstName').value,
+                    lastName: document.getElementById('editLastName').value,
+                    subjects: document.getElementById('editSubjects').value.split(','),
+                    rate: document.getElementById('editRate').value
+                };
+            }
+
+            try {
+                const type = document.getElementById('studentFields').style.display === 'block' ? 'students' : 'tutors';
+                const response = await fetch(`/admin/manage-users/${type}/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                closeModal();
+                if (type === 'students') {
+                    fetchStudents();
+                } else {
+                    fetchTutors();
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+            }
+        });
+
+        // Close the Modal
+        function closeModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+
+        // Delete User
+        async function deleteUser(userId, type) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+
+            try {
+                const response = await fetch(`/admin/manage-users/${type}/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                if (type === 'students') {
+                    fetchStudents();
+                } else {
+                    fetchTutors();
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+            }
+        }
+
+        // Initialize with Students Section
+        showSection('students');
+    </script>
+</body>
+</html>

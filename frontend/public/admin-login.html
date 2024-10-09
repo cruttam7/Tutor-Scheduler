@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+</html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +9,6 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-
-
 
     <div class="login-container">
         <div class="form-box">
@@ -24,41 +24,59 @@
                 <!-- Login Button -->
                 <button type="submit">Login</button>
             </form>
+
+            <!-- Forgot Password Link -->
+            <div class="forgot-password">
+                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+            </div>
     
             <div id="message"></div>
         </div>
     </div>
-    
 
-
-
-
-
-
-   <!-- Enhanced Modal for displaying messages -->
-   <div id="messageModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <span class="close">&times;</span>
-         
-        </div>
-        <div class="modal-body">
-            <p id="messageText"></p>
-        </div>
-        <div class="modal-footer">
-            <button id="closeBtn">Try Agian</button>
+    <!-- Enhanced Modal for displaying messages -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="messageText"></p>
+            </div>
         </div>
     </div>
-</div>
 
     <script>
+        // Show the modal
+        function showModal(message, color) {
+            const modal = document.getElementById('messageModal');
+            const messageText = document.getElementById('messageText');
+            messageText.textContent = message;
+            messageText.style.color = color;
+    
+            modal.style.display = 'block';
+            modal.classList.add('fade-in');
+    
+            // Automatically close the modal after 1.5 seconds if successful
+            if (color === 'green') {
+                setTimeout(() => {
+                    modal.classList.remove('fade-in');
+                    modal.classList.add('fade-out');
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        modal.classList.remove('fade-out');
+                    }, 100); // Faster fade-out
+                }, 1500); // 1.5 seconds
+            }
+        }
+    
         // Handle form submission
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
+    
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
+    
             const response = await fetch('/admin/login', {
                 method: 'POST',
                 headers: {
@@ -66,38 +84,41 @@
                 },
                 body: JSON.stringify({ email, password })
             });
-
+    
             const result = await response.json();
             
-            // Display the message in the modal
-            const modal = document.getElementById('messageModal');
-            const messageText = document.getElementById('messageText');
-            messageText.textContent = result.message;
-            modal.style.display = "block";
-
             if (response.ok) {
-                messageText.textContent = "Login Successful!";
-                messageText.style.color = "green";
-                window.location.href = '/admin/dashboard';
+                showModal(result.message || "Login Successful!", "green");
+                setTimeout(() => {
+                    window.location.href = '/admin/dashboard';
+                }, 1800); // Redirect after the modal fades out quickly
             } else {
-                messageText.textContent = "Login Unsuccessful";
-                messageText.style.color = "red";
+                // Show specific error message
+                showModal(result.message || "Login Unsuccessful", "red");
             }
         });
+        // Function to close the modal
+function closeModal() {
+    const modal = document.getElementById("messageModal");
+    modal.classList.remove('fade-in');
+    modal.classList.add('fade-out');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        modal.classList.remove('fade-out');
+    }, 100);
+}
 
-        // Close the modal when the user clicks the close button
-        document.querySelector(".close").addEventListener("click", function() {
-            document.getElementById("messageModal").style.display = "none";
-        });
+// Attach event listener to the close button
+document.querySelector(".close").addEventListener("click", closeModal);
 
-        // Close the modal if the user clicks anywhere outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('messageModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
-    
+// Close the modal if the user clicks anywhere outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('messageModal');
+    if (event.target == modal) {
+        closeModal();  // Call the closeModal function if clicked outside the modal
+    }
+};
     </script>
+    
 </body>
 </html>

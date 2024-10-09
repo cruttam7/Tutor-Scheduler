@@ -52,11 +52,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Chart Container */
-.chart-container {
-    margin-bottom: 50px;
-}
-
 /* Admin Actions Section */
 .admin-actions {
     margin-top: 50px;
@@ -84,6 +79,10 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 300px; /* Force equal height for all cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Ensure content and button are spaced equally */
 }
 
 .action-card:hover {
@@ -102,6 +101,7 @@ body {
     margin: 10px 0 20px;
     font-size: 14px;
     color: #7f8c8d;
+    flex-grow: 1; /* Ensure content grows to push button down */
 }
 
 /* Button-Like Action Links */
@@ -115,6 +115,7 @@ body {
     font-weight: 500;
     display: inline-block;
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    align-self: center; /* Align button in the middle at the bottom */
 }
 
 .btn-action:hover {
@@ -123,6 +124,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Action Icon */
 .action-icon {
     font-size: 40px;
     color: #2ecc71;
