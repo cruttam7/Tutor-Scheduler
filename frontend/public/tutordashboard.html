@@ -1,249 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard</title>
-    <style>
-        /* General reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard with Calendar on Side</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+ <style>
+    body 
+    
+    
+    
+    
+    {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    .header {
+      background-color: #34495e;
+      color: white;
+      padding: 5px;
+      text-align: center;
+    }
+
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      position: fixed;
+      padding: 20px;
+      top: 0;
+      left: -3500px; /* Initially hidden */
+      background-color: #333;
+      color: white;
+      padding-top: 30px;
+      transition: left 0.3s ease; /* Smooth transition for open/close */
+      z-index: 1000;
+      display: flex;
+    flex-direction: column;
+    }
+
+    .sidebar.active {
+      left: 0; /* Moves into view when active */
+    }
+
+   
+
+    .sidebar a:hover {
+      background-color: #575757;
+    }
+    .sidebar ul {
+            list-style: none;
         }
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f9;
-            color: #333;
+        .sidebar ul li {
+            margin: 20px 0;
         }
 
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            color: #333;
-        }
-
-        /* Action Cards */
-        .action-cards {
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            width: 30%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            cursor: pointer;
-        }
-
-        .card:hover {
-            transform: scale(1.05);
-        }
-
-        .card h3 {
-            font-size: 1.5rem;
-            color: #2b7a78;
-            margin-bottom: 10px;
-        }
-
-        .card p {
-            font-size: 1rem;
-            color: #555;
-        }
-
-        /* Calendar Section */
-        .calendar-section {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .calendar-section h2 {
-            font-size: 1.8rem;
-            color: #2b7a78;
-            margin-bottom: 20px;
-        }
-
-        #calendar {
-            height: 400px;
-            background-color: #f1f1f1;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
             align-items: center;
         }
 
-        /* Upcoming Sessions Section */
-        .upcoming-sessions {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .sidebar ul li a i {
+            margin-right: 10px;
+        }
+      
+
+
+    .open-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #34495e;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 20px;
+      z-index: 1001;
+      display: block;
+    }
+
+    .open-btn i {
+      margin-right: 10px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .main-content {
+      display: flex;
+      margin-left: 250px;
+      padding: 20px;
+      justify-content: space-between;
+    }
+
+    .content {
+      flex: 3;
+    }
+
+    .content h2 {
+      color: #333;
+    }
+
+    /* Action cards styling */
+    .action-cards {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .action-card {
+      flex: 1;
+      background-color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s, transform 0.3s ease, box-shadow 0.3s ease;
+      max-width: 250px; /* Limit card width */
+    }
+
+    .action-card:hover {
+      background-color: #e0f7fa;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-card h3 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .action-card p {
+      color: #555;
+      font-size: 14px;
+    }
+
+    /* Course Review Section */
+    .course-reviews {
+      margin-top: 40px;
+    }
+
+    .course-reviews h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .course-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .course-card {
+      flex: 1;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      max-width: 300px; /* Limit card width */
+    }
+
+    .course-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .course-card h3 {
+      font-size: 18px;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .course-card p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* Calendar Section on the Side */
+    .calendar {
+      flex: 1;
+      margin-left: 20px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-header button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .calendar-header button:hover {
+      background-color: #45a049;
+    }
+
+    .calendar-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .calendar-table th, .calendar-table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      width: 14.28%; /* 7 days */
+    }
+
+    .calendar-table th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .calendar-table td:hover {
+      background-color: #f4f4f4;
+      cursor: pointer;
+    }
+
+    .calendar-dot {
+      height: 6px;
+      width: 6px;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    /* New section for Added Activities */
+    .added-activities {
+      margin-top: 40px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .added-activities h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    .activity-list-item {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+ /* Recent Activity Feed */
+ .recent-activities {
+      margin-top: 40px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .recent-activities h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    /* Logout Button in Sidebar */
+    .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            text-align: center;
         }
 
-        .upcoming-sessions h2 {
-            font-size: 1.8rem;
-            color: #2b7a78;
-            margin-bottom: 20px;
+        .logout-btn:hover {
+            background-color: #c0392b;
         }
 
-        #sessions-list {
-            font-size: 1rem;
-            color: #333;
-            line-height: 1.6;
-        }
+    .activity-item {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
 
-        /* Attendance Section */
-        .attendance-section {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+    /* Reports Section */
+    .reports {
+      margin-top: 40px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-        .attendance-section h2 {
-            font-size: 1.8rem;
-            color: #2b7a78;
-            margin-bottom: 20px;
-        }
+    .reports h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
 
-        #attendance-list {
-            font-size: 1rem;
-            color: #333;
-            line-height: 1.6;
-        }
+    .reports p {
+      font-size: 14px;
+      color: #555;
+    }
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .action-cards {
-                flex-direction: column;
-                align-items: center;
-            }
+      .calendar {
+        margin-top: 20px;
+        margin-left: 0;
+      }
 
-            .card {
-                width: 90%;
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+      .action-cards, .course-cards {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .action-card, .course-card {
+        max-width: 100%; /* Make the cards full width on smaller screens */
+      }
+      .sidebar {
+        left: -250px;
+      }
+
+      .sidebar.active {
+        left: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <header>
-            <h1>Teacher Dashboard</h1>
-        </header>
 
-        <section class="action-cards">
-            <div class="card" onclick="createSession()">
-                <h3>Create New Session</h3>
-                <p>Organize a new tutoring session with your students.</p>
-            </div>
-            <div class="card" onclick="viewUpcomingSessions()">
-                <h3>Upcoming Sessions</h3>
-                <p>View your scheduled sessions.</p>
-            </div>
-            <div class="card" onclick="markAttendance()">
-                <h3>Mark Attendance</h3>
-                <p>Track and update student attendance.</p>
-            </div>
-        </section>
+  <div class="header">
+    <h1>Teacher Dashboard</h1>
+    <p>Welcome, Manish</p>
+  </div>
+    <!-- Open Sidebar Button -->
+    <button class="open-btn" id="openBtn">
+        <i class="fas fa-bars"></i> 
+      </button>
+    
+</button>
+<div class="sidebar" id="sidebar">
+    <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
+    <h2>Tutor Portal</h2>
+<ul>
+    <li> <a href="#overview"><i class="fas fa-home"></i> Overview</a></li>
+     <li><a href="#classes"><i class="fas fa-chalkboard-teacher"></i> My Classes</a></li>
+    <li><a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a></li>
+    <li><a href="#messages"><i class="fas fa-envelope"></i> Messages</a></li>
+    <li> <a href="#profile"><i class="fas fa-user"></i> Profile</a></li>
+</ul>
+    <button class="logout-btn" onclick="window.location.href='index.html';">Logout</button>
 
-        <section class="calendar-section">
-            <h2>Calendar</h2>
-            <div id="calendar">
-                <!-- FullCalendar can be integrated here -->
-                <p>Calendar coming soon...</p>
-            </div>
-        </section>
+  </div>
 
-        <section class="upcoming-sessions">
-            <h2>Upcoming Sessions</h2>
-            <div id="sessions-list">
-                <!-- Dynamic list of sessions will be rendered here -->
-                <p>No upcoming sessions yet.</p>
-            </div>
-        </section>
+  <div class="main-content" id="mainContent">
+    <div class="content">
+      <h2>Dashboard Overview</h2>
 
-        <section class="attendance-section">
-            <h2>Attendance</h2>
-            <div id="attendance-list">
-                <!-- Attendance details will be rendered here -->
-                <p>No attendance data available yet.</p>
-            </div>
-        </section>
+      <div class="action-cards">
+        <div class="action-card">
+            <h3><i class="fas fa-plus-circle"></i> Create New Session</h3>
+            <p>Organize a new tutoring session with your students.</p>
+        </div>
+        <div class="action-card">
+            <h3><i class="fas fa-calendar-alt"></i> Upcoming Sessions</h3>
+            <p>View your scheduled sessions.</p>
+        </div>
+        <div class="action-card">
+            <h3><i class="fas fa-check-square"></i> Mark Attendance</h3>
+            <p>Track and update student attendance.</p>
+        </div>
+        <div class="action-card" id="registerCard">
+            <h3><i class="fas fa-user-plus"></i> Register New Student</h3>
+            <p>Add a new student to the system.</p>
+        </div>
+    </div>
+    
+ <!-- Recent Activities -->
+ <div class="recent-activities">
+    <h2>Recent Activities</h2>
+    <div class="activity-item">New student registered: John Doe</div>
+    <div class="activity-item">You have 2 unread messages</div>
+    <div class="activity-item">Class attendance updated for Math 101</div>
+  </div>
+
+  <!-- Reports Section -->
+  <div class="reports">
+    <h2>Reports</h2>
+    <p>Generate reports for student attendance and performance.</p>
+    <button>Download Attendance Report</button>
+    <button>Download Performance Report</button>
+  </div>
+
+    
     </div>
 
-    <script>
-        // Client-side actions for the dashboard
+    <!-- Calendar Section on the Side -->
+    <div class="calendar">
+      <div class="calendar-header">
+        <button onclick="previousMonth()">&#8249;</button>
+        <h2 id="monthYear"></h2>
+        <button onclick="nextMonth()">&#8250;</button>
+      </div>
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+          </tr>
+        </thead>
+        <tbody id="calendar-body">
+          <!-- Calendar dates will be generated here -->
+        </tbody>
+      </table>
+        <!-- Added Activities Section -->
+        <div class="added-activities">
+            <h2>Added Activities</h2>
+            <div id="added-activities-list"></div>
+          </div>
+    </div>
+    
+  </div>
+  
 
-        // Placeholder function for creating a new session
-        function createSession() {
-            alert("Create a new session clicked!");
-            // Logic for creating a session (e.g., opening a modal or redirecting to a new form)
-        }
+  <script>
 
-        // Function to fetch and display upcoming sessions
-        function viewUpcomingSessions() {
-            const sessionsList = document.getElementById('sessions-list');
-            // Simulated fetch request to get sessions (replace with actual API call)
-            const sessions = [
-                { subject: "Math", date: "2024-10-12", time: "10:00 AM" },
-                { subject: "Science", date: "2024-10-14", time: "2:00 PM" },
-            ];
 
-            if (sessions.length > 0) {
-                sessionsList.innerHTML = sessions.map(session => `
-                    <div class="session-item">
-                        <p><strong>${session.subject}</strong> - ${session.date} at ${session.time}</p>
-                    </div>
-                `).join('');
-            } else {
-                sessionsList.innerHTML = "<p>No upcoming sessions found.</p>";
+
+
+
+    // JavaScript to generate calendar days and handle events
+
+    const calendarBody = document.getElementById('calendar-body');
+    const monthYear = document.getElementById('monthYear');
+    const activityList = document.getElementById('added-activities-list');
+    let today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+    let activities = {};
+
+    function generateCalendar(month, year) {
+      const firstDay = (new Date(year, month)).getDay();
+      const daysInMonth = 32 - new Date(year, month, 32).getDate();
+      calendarBody.innerHTML = ''; // Clear previous rows
+      monthYear.innerHTML = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement('tr');
+
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 && j < firstDay) {
+            const cell = document.createElement('td');
+            row.appendChild(cell);
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            const cell = document.createElement('td');
+            cell.textContent = date;
+            if (activities[`${year}-${month + 1}-${date}`]) {
+              const dot = document.createElement('span');
+              dot.className = 'calendar-dot';
+              cell.appendChild(dot);
             }
+            cell.addEventListener('click', function() {
+              const activity = prompt(`Add an activity for ${date}/${month + 1}/${year}:`);
+              if (activity) {
+                const activityKey = `${year}-${month + 1}-${date}`;
+                if (!activities[activityKey]) {
+                  activities[activityKey] = [];
+                }
+                activities[activityKey].push(activity);
+                updateActivityList(activityKey, activity);
+
+                if (!cell.querySelector('.calendar-dot')) {
+                  const dot = document.createElement('span');
+                  dot.className = 'calendar-dot';
+                  cell.appendChild(dot);
+                }
+              }
+            });
+            row.appendChild(cell);
+            date++;
+          }
         }
+        calendarBody.appendChild(row);
+      }
+    }
 
-        // Function to simulate marking attendance
-        function markAttendance() {
-            const attendanceList = document.getElementById('attendance-list');
-            // Simulated data for student attendance (replace with actual data)
-            const attendanceData = [
-                { student: "John Doe", status: "Present" },
-                { student: "Jane Smith", status: "Absent" },
-            ];
+    function previousMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      generateCalendar(currentMonth, currentYear);
+    }
 
-            if (attendanceData.length > 0) {
-                attendanceList.innerHTML = attendanceData.map(attendance => `
-                    <div class="attendance-item">
-                        <p>${attendance.student}: ${attendance.status}</p>
-                    </div>
-                `).join('');
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      generateCalendar(currentMonth, currentYear);
+    }
+
+    function updateActivityList(key, activity) {
+      const activityItem = document.createElement('div');
+      activityItem.className = 'activity-list-item';
+      activityItem.textContent = `${key}: ${activity}`;
+      activityList.appendChild(activityItem);
+    }
+
+    
+
+    generateCalendar(currentMonth, currentYear);
+
+     // Function to hide button on scroll
+     window.addEventListener('scroll', function() {
+            var openBtn = document.getElementById('openBtn');
+
+            if (window.scrollY > 0) {
+                openBtn.style.display = 'none';
             } else {
-                attendanceList.innerHTML = "<p>No attendance data available.</p>";
+                openBtn.style.display = 'block';
             }
-        }
+        });
 
-        // Automatically fetch and display upcoming sessions on page load
-        window.onload = function() {
-            viewUpcomingSessions();
-        };
-    </script>
+
+    // Function to toggle the sidebar
+function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const openBtn = document.getElementById('openBtn');
+
+      // Toggle sidebar active state
+      sidebar.classList.toggle('active');
+      mainContent.classList.toggle('shrink');
+
+      // Show or hide the open button depending on the sidebar's state
+      if (sidebar.classList.contains('active')) {
+        openBtn.style.display = 'none';  // Hide open button when sidebar is active
+      } else {
+        openBtn.style.display = 'block'; // Show open button when sidebar is inactive
+      }
+    }
+
+    // Add event listeners for open and close buttons
+    document.getElementById('openBtn').addEventListener('click', toggleSidebar);
+    document.getElementById('closeBtn').addEventListener('click', toggleSidebar);
+ 
+
+
+
+       // JavaScript to handle the click event
+       document.getElementById("registerCard").onclick = function() {
+        window.location.href = "dashboard.html";  // Redirects to index.html when the card is clicked
+    }
+  </script>
+
 </body>
 </html>

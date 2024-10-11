@@ -71,34 +71,7 @@ height: 80px;        }
     flex-direction: column;
     justify-content: space-between;
     }
-    .sidebar h2 {
-        
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 30px;
-        }
-
-        
-        .sidebar ul {
-            list-style: none;
-        }
-
-        .sidebar ul li {
-            margin: 20px 0;
-        }
-
-        .sidebar ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        .sidebar ul li a i {
-            margin-right: 10px;
-        }
-
+    
 
     .sidebar.active {
       left: 0; /* Moves into view when active */
@@ -153,7 +126,7 @@ height: 80px;        }
         .logout-btn {
             background-color: #e74c3c;
             color: white;
-            padding: 20px 50px;
+            padding: 12px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -323,13 +296,12 @@ height: 80px;        }
 <div class="sidebar" id="sidebar">
     <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
     <h2>Student Portal</h2>
-    <ul>
-   <li> <a href="#overview"><i class="fas fa-home"></i> Overview</a></li>
-   <li></li> <a href="#classes"><i class="fas fa-chalkboard"></i> My Classes</a></li>
-   <li></li> <a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a></li>
-   <li></li> <a href="#messages"><i class="fas fa-envelope"></i> Messages</a></li>
-   <li></li> <a href="#profile"><i class="fas fa-user"></i> Profile</a></li>
-    </ul>
+    <a href="#overview"><i class="fas fa-home"></i> Overview</a>
+    <a href="#classes"><i class="fas fa-chalkboard"></i> My Classes</a>
+    <a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a>
+    <a href="#messages"><i class="fas fa-envelope"></i> Messages</a>
+    <a href="#profile"><i class="fas fa-user"></i> Profile</a>
+
 
         <button class="logout-btn" onclick="window.location.href='index.html';">Logout</button>
 
@@ -340,19 +312,14 @@ height: 80px;        }
     <div class="navbar">
         <ul>
             <li><a href="#">Home</a></li>
-          
+            <li><a href="#">Subjects</a></li>
             <li><a href="#">Profile</a></li>
-
-            <li><a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a></li>
-      
-            <li><a href="resources.html">Resources</a></li>
-            <li><a href="help.html">Help</a></li>
         </ul>
     </div>
 
     <div class="container">
         <header>
-            <h1>Your Learning Dashboard</h1>
+            <h1>Kid's Learning Dashboard</h1>
             <p>Let's Learn with Fun Activities!</p>
         </header>
 
