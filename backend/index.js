@@ -64,13 +64,13 @@ app.post('/admin/login', async (req, res) => {
       // Check if the admin exists with the normalized email
       const admin = await Admin.findOne({ email });
       if (!admin) {
-          return res.status(404).json({ message: 'Admin not found. Please check the email address.' });
+          return res.status(400).json({ message: 'Admin not found' });
       }
 
       // Compare the provided password with the hashed password in the database
       const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
-          return res.status(401).json({ message: 'Invalid credentials. Please try again.' });
+          return res.status(400).json({ message: 'Invalid credentials' });
       }
 
       // If login is successful, create a session for the admin
@@ -80,12 +80,13 @@ app.post('/admin/login', async (req, res) => {
           email: admin.email
       };
 
-      res.status(200).json({ message: 'Login successful. Redirecting to dashboard.' });
+      res.status(200).json({ message: 'Admin login successful' });
   } catch (err) {
       console.error('Error logging in admin:', err.message);
-      res.status(500).json({ message: 'Internal server error. Please try again later.' });
+      res.status(500).json({ message: 'Error logging in admin' });
   }
 });
+
 
 
 // Middleware to protect admin routes
@@ -304,7 +305,8 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
     }
 });
 
- 
+
+
  app.post('/tutors/change-password/:token', async (req, res) => {
   try {
     // Destructure the current and new passwords from the request body
@@ -540,6 +542,87 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Error logging in' });
   }
 });
+
+
+// Email Sending Logic (backend)
+app.post('/tutors/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+      const tutor = await User.findOne({ email, role: 'tutor' });
+      if (!tutor) {
+          return res.status(400).json({ message: 'Tutor not found.' });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = Date.now() + 15 * 60 * 1000; // 15-minute expiration
+
+      tutor.resetPasswordToken = resetToken;
+      tutor.resetPasswordExpires = resetExpires;
+      await tutor.save();
+
+      // Make sure this URL is properly constructed
+      const resetLink = `http://localhost:3000/reset-password.html?token=${resetToken}`;
+
+      const mailOptions = {
+          from: 'your-email@gmail.com',
+          to: tutor.email,
+          subject: 'Password Reset Request',
+          text: `Please click the link to reset your password:\n\n${resetLink}\n\nThis link is valid for 15 minutes.`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+              console.error('Error sending email:', error);
+              return res.status(500).json({ message: 'Error sending reset email.' });
+          } else {
+              console.log('Email sent: ' + info.response);
+          }
+      });
+
+      res.status(200).json({ message: 'Password reset email has been sent.' });
+
+  } catch (error) {
+      console.error('Error in forgot password:', error.message);
+      res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+});
+
+
+app.post('/tutors/reset-password-with-token/:token', async (req, res) => {
+  const { token } = req.params; // Token from the URL
+  const { newPassword } = req.body; // New password from the request body
+
+  try {
+    // Find the tutor by reset token and check if it's still valid
+    const tutor = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() } // Ensure the token is not expired
+    });
+
+    if (!tutor) {
+      return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+    }
+
+    // Hash the new password and update the tutor's password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    tutor.password = hashedPassword;
+
+    // Invalidate the token by clearing it and its expiration
+    tutor.resetPasswordToken = undefined;
+    tutor.resetPasswordExpires = undefined;
+
+    // Save the updated tutor details
+    await tutor.save();
+
+    res.status(200).json({ message: 'Password has been reset successfully.' });
+
+  } catch (error) {
+    console.error('Error resetting password:', error.message);
+    res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+});
+
 
 // Define the /tutors/create-student route for tutors to create student accounts
 app.post('/tutors/create-student', async (req, res) => {
