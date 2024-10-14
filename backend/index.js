@@ -247,7 +247,7 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
 
         // Create a secure token and expiration time for the password reset
         const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
-        const resetExpires = Date.now() + 1 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
+        const resetExpires = Date.now() + 15 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
 
         // Create new tutor (role: 'tutor')
         const tutor = new User({
