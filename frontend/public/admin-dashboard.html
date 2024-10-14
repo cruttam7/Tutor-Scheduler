@@ -351,7 +351,7 @@
             <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
             <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
         </ul>
-        <button class="logout-btn" onclick="window.location.href='index.html';">Logout</button>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
     </div>
 
     <!-- Main Content Area -->
@@ -406,6 +406,15 @@
     </div>
 
     <script>
+
+// Handle logout
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+                const logoutResponse = await fetch('/logout', { method: 'POST' });
+                if (logoutResponse.ok) {
+                    window.location.href = '/admin-login.html';
+                }
+        });
+
         // Function to hide button on scroll
         window.addEventListener('scroll', function() {
             var openBtn = document.getElementById('openBtn');

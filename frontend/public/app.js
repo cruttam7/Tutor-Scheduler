@@ -108,8 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(error => console.log('Error fetching student data:', error));
 
-// to show password
-
+    // Toggle password visibility
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#loginPassword');
 
@@ -122,13 +121,86 @@ document.addEventListener('DOMContentLoaded', function() {
         this.classList.toggle('fa-eye-slash');
     });
 
-
-
     // Logout functionality
     window.logout = function() {
         fetch('/logout', { method: 'POST' })
         .then(() => window.location.href = '/index.html')
         .catch(error => console.error('Logout failed:', error));
     }
-});
 
+    // Handle Forgot Password modal display
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const closeModalButtons = document.getElementsByClassName('close-modal');
+
+    // Open forgot password modal
+    forgotPasswordLink.addEventListener('click', function() {
+        forgotPasswordModal.style.display = 'block';
+    });
+
+    // Close modals
+    Array.from(closeModalButtons).forEach(button => {
+        button.addEventListener('click', function() {
+            forgotPasswordModal.style.display = 'none';
+            messageModal.style.display = 'none';
+        });
+    });
+
+    // Handle forgot password form submission
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const messageModal = document.getElementById('messageModal');
+    const messageText = document.getElementById('messageText');
+
+    forgotPasswordForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const email = document.getElementById('forgotEmail').value;
+
+        try {
+            const response = await fetch('/tutors/forgot-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const result = await response.json();
+            messageText.textContent = result.message || 'If the email is registered, a reset link has been sent.';
+            messageModal.style.display = 'block';
+        } catch (error) {
+            messageText.textContent = 'Error sending reset link. Please try again.';
+            messageModal.style.display = 'block';
+        }
+    });
+
+    // Handle reset password form submission
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+        // Show reset password form when the token is in the URL
+        document.getElementById('resetPasswordContainer').style.display = 'block';
+
+        resetPasswordForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+
+            try {
+                const response = await fetch(`/tutors/reset-password-with-token/${token}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ newPassword })
+                });
+
+                const result = await response.json();
+                const resetMessage = document.getElementById('resetMessage');
+                resetMessage.textContent = result.message || 'Password has been reset successfully.';
+            } catch (error) {
+                document.getElementById('resetMessage').textContent = 'Error resetting password. Please try again.';
+            }
+        });
+    }
+});
