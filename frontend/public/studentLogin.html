@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Login</title>
     <link rel="stylesheet" href="loginonly.css">
 </head>
+
 <body>
     <div class="login-container">
         <div class="form-box">
-            <h2>Student Login</h2>
+            <h1>Student Login</h1>
             <form id="loginForm">
-                <input type="email" id="email" placeholder="Enter your email" required>
-                <input type="password" id="password" placeholder="Enter your password" required>
+                <input type="email" id="loginEmail" placeholder="Email" required><br>
+                <div class="password-container">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                </div>    
                 <button type="submit">Login</button>
             </form>
         </div>
@@ -22,8 +27,8 @@
         document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault();
             var formData = {
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
             };
         
             fetch('/students/login', {
@@ -44,6 +49,24 @@
             })
             .catch(error => console.error('Error:', error));
         });
+
+
+
+        
+// to show password
+
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#loginPassword');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // Toggle the eye slash icon
+        this.classList.toggle('fa-eye-slash');
+    });
     </script>
+  
 </body>
 </html>
