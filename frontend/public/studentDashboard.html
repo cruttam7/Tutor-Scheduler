@@ -341,9 +341,9 @@ height: 80px;        }
         <ul>
             <li><a href="#">Home</a></li>
           
-            <li><a href="#">Profile</a></li>
+            
 
-            <li><a href="progress.html"><i class="fas fa-chart-line"></i> Progress</a></li>
+            <li><a href="progress.html"></i> Progress</a></li>
       
             <li><a href="resources.html">Resources</a></li>
             <li><a href="help.html">Help</a></li>
@@ -521,6 +521,20 @@ function toggleSidebar() {
     // Add event listeners for open and close buttons
     document.getElementById('openBtn').addEventListener('click', toggleSidebar);
     document.getElementById('closeBtn').addEventListener('click', toggleSidebar);
+    const studentId = "STUDENT_ID_HERE"; // Replace dynamically
+
+async function fetchStudentEvents() {
+    const response = await fetch(`/api/calendar/student-events/${studentId}`);
+    const events = await response.json();
+
+    events.forEach(event => {
+        console.log(`Event: ${event.title}, Date: ${new Date(event.date).toLocaleDateString()}`);
+        // Update student calendar UI dynamically
+    });
+}
+
+fetchStudentEvents();
+
  
     </script>
 </body>

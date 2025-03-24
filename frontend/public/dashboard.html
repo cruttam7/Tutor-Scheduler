@@ -1,120 +1,250 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="dashboard.css">
-    <title>Dashboard - Student Account Creation</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register Student | Teacher Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
+
+    .dashboard-container {
+      max-width: 650px;
+      margin: auto;
+      background: #ffffff;
+      padding: 35px 40px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-group label {
+      font-weight: 500;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .checkbox-item input {
+      margin-right: 8px;
+    }
+
+    .primary-button {
+      width: 100%;
+      padding: 12px;
+      background-color: #3498db;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 15px;
+    }
+
+    .primary-button:hover {
+      background-color: #2980b9;
+    }
+
+    #registration-result {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .preview-box {
+      background-color: #ecf6fc;
+      padding: 15px;
+      border-left: 4px solid #3498db;
+      border-radius: 6px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .preview-box h3 {
+      margin-top: 0;
+    }
+
+    .preview-box p {
+      margin: 4px 0;
+    }
+  </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>Register for new student!</h1>
-        <p>Manage student information and accounts below.</p>
-        <button class="primary-button" onclick="window.location.href='profile.html'">Edit Profile</button>
-        <a href="#" class="logout-link" onclick="logout(); return false;">Logout</a>
+  <div class="dashboard-container">
+    <h1>Teacher Dashboard</h1>
+    <h2>Create Student Account</h2>
 
-        <div class="create-account-section">
-            <h2>Create Student Account</h2>
-            <form id="createStudentForm">
-                <!-- Student Information Section -->
-                <h3>Student Information</h3>
+    <form id="createStudentForm">
+      <div class="form-group">
+        <label for="studentName">Student Full Name</label>
+        <input type="text" id="studentName" required />
+      </div>
 
-                <div class="form-group">
-                    <label for="studentName">Student Full Name</label>
-                    <input type="text" id="studentName" placeholder="Enter student's full name" required>
-                    <span class="tooltip-error" id="studentNameError">Full name is required</span>
-                </div>
+      <div class="form-group">
+        <label for="studentDOB">Date of Birth</label>
+        <input type="date" id="studentDOB" required />
+      </div>
 
-                <div class="form-group">
-                    <label for="studentDOB">Date of Birth</label>
-                    <input type="date" id="studentDOB" required>
-                    <span class="tooltip-error" id="studentDOBError">Please select a valid date</span>
-                </div>
+      <div class="form-group">
+        <label for="studentGrade">Grade</label>
+        <select id="studentGrade" required>
+          <option value="">Select Grade</option>
+          <option value="Grade 1">1st Grade</option>
+          <option value="Grade 2">2nd Grade</option>
+          <option value="Grade 3">3rd Grade</option>
+          <option value="Grade 4">4th Grade</option>
+          <option value="Grade 5">5th Grade</option>
+        </select>
+      </div>
 
-                <div class="form-group">
-                    <label for="studentGrade">Grade</label>
-                    <select id="studentGrade" required>
-                        <option value="">Select Grade</option>
-                        <option value="1">1st Grade</option>
-                        <option value="2">2nd Grade</option>
-                        <option value="3">3rd Grade</option>
-                        <option value="4">4th Grade</option>
-                        <option value="5">5th Grade</option>
-                    </select>
-                    <span class="tooltip-error" id="studentGradeError">Please select a grade</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="studentSchool">School Name</label>
-                    <input type="text" id="studentSchool" placeholder="Enter school name" required>
-                    <span class="tooltip-error" id="studentSchoolError">School name is required</span>
-                </div>
-
-                <!-- Guardian Information Section -->
-                <h3>Guardian Information</h3>
-
-                <div class="form-group">
-                    <label for="guardianName">Guardian Full Name</label>
-                    <input type="text" id="guardianName" placeholder="Enter guardian's full name" required>
-                    <span class="tooltip-error" id="guardianNameError">Guardian name is required</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="guardianEmail">Guardian Email</label>
-                    <input type="email" id="guardianEmail" placeholder="Enter guardian email" required>
-                    <span class="tooltip-error" id="guardianEmailError">Invalid email format</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="guardianPhone">Guardian Phone Number</label>
-                    <input type="tel" id="guardianPhone" placeholder="Enter guardian's phone number" required>
-                    <span class="tooltip-error" id="guardianPhoneError">Invalid phone number</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="relationship">Relationship to Student</label>
-                    <select id="relationship" required>
-                        <option value="">Select relationship</option>
-                        <option value="mother">Mother</option>
-                        <option value="father">Father</option>
-                        <option value="guardian">Guardian</option>
-                    </select>
-                    <span class="tooltip-error" id="relationshipError">Please select a relationship</span>
-                </div>
-
-                <!-- Account Details Section -->
-                <h3>Account Details</h3>
-
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter a username for the account" required>
-                    <span class="tooltip-error" id="usernameError">Username is required</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="studentEmail">Student's email</label>
-                    <input type="email" id="studentEmail" placeholder="Enter student email" required>
-                    <span class="tooltip-error" id="studentEmailError">Invalid email format</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="studentPassword">Create Password</label>
-                    <input type="password" id="studentPassword" placeholder="Enter password" required>
-                    <span class="tooltip-error" id="passwordError">Password must be at least 8 characters, contain a letter, a number, and a special character</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm password" required>
-                    <span class="tooltip-error" id="confirmPasswordError">Passwords do not match</span>
-                </div>
-
-                <button class="primary-button" type="submit">Create Student Account</button>
-            </form>
+      <div class="form-group">
+        <label>Select Courses</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item"><input type="checkbox" value="Mathematics" class="course"> <label>Mathematics</label></div>
+          <div class="checkbox-item"><input type="checkbox" value="English" class="course"> <label>English</label></div>
+          <div class="checkbox-item"><input type="checkbox" value="Science" class="course"> <label>Science</label></div>
         </div>
+      </div>
 
+      <div class="form-group">
+        <label for="guardianName">Guardian Name</label>
+        <input type="text" id="guardianName" required />
+      </div>
+
+      <div class="form-group">
+        <label for="username">Student Username</label>
+        <input type="text" id="username" required />
+      </div>
+
+      <div class="form-group">
+        <label for="studentEmail">Student Email</label>
+        <input type="email" id="studentEmail" required />
+      </div>
+
+      <div class="form-group">
+        <label for="studentPassword">Password</label>
+        <input type="password" id="studentPassword" required />
+      </div>
+
+      <button class="primary-button" type="submit">Register Student</button>
+    </form>
+
+    <div id="preview" class="preview-box">
+      <h3>Student Registration Preview</h3>
+      <p><strong>Name:</strong> <span id="preview-name"></span></p>
+      <p><strong>Grade:</strong> <span id="preview-grade"></span></p>
+      <p><strong>Courses:</strong> <span id="preview-courses"></span></p>
+      <p><strong>Guardian:</strong> <span id="preview-guardian"></span></p>
     </div>
 
-    <script src="student_dashboard.js"></script>
+    <div id="registration-result"></div>
+  </div>
+
+  <script>
+    document.getElementById("createStudentForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const selectedCourses = Array.from(document.querySelectorAll(".course:checked")).map(c => c.value);
+
+      if (selectedCourses.length === 0) {
+        alert("Please select at least one course.");
+        return;
+      }
+
+      const studentData = {
+        studentName: document.getElementById("studentName").value,
+        studentDOB: document.getElementById("studentDOB").value,
+        studentGrade: document.getElementById("studentGrade").value,
+        courses: selectedCourses,
+        guardianName: document.getElementById("guardianName").value,
+        username: document.getElementById("username").value,
+        email: document.getElementById("studentEmail").value,
+        password: document.getElementById("studentPassword").value,
+        studentSchool: "Not Provided",
+        guardianEmail: "Not Provided",
+        guardianPhone: "Not Provided",
+        relationship: "Not Specified"
+      };
+
+      // Show preview before submission
+      document.getElementById("preview-name").textContent = studentData.studentName;
+      document.getElementById("preview-grade").textContent = studentData.studentGrade;
+      document.getElementById("preview-courses").textContent = selectedCourses.join(", ");
+      document.getElementById("preview-guardian").textContent = studentData.guardianName;
+      document.getElementById("preview").style.display = "block";
+
+      const confirmSubmit = confirm("Do you want to submit this registration?");
+      if (!confirmSubmit) return;
+
+      try {
+        const response = await fetch("/tutors/create-student", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(studentData),
+        });
+
+        const result = await response.json();
+        const resultBox = document.getElementById("registration-result");
+
+        if (response.ok) {
+          resultBox.style.color = "green";
+          resultBox.textContent = "Student registered successfully!";
+          e.target.reset();
+          document.getElementById("preview").style.display = "none";
+        } else {
+          resultBox.style.color = "red";
+          resultBox.textContent = result.message || "Registration failed.";
+        }
+      } catch (err) {
+        console.error("Registration error:", err);
+        document.getElementById("registration-result").textContent = "Something went wrong.";
+      }
+    });
+  </script>
 </body>
 </html>
