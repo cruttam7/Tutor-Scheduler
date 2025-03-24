@@ -48,6 +48,49 @@ app.get('/admin/login', (req, res) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+//new backend code by manish
+app.get('/api/students', async (req, res) => {
+  try {
+    const students = await Student.find({}, 'studentName studentDOB studentGrade courses guardianName createdAt');
+    const studentList = students.map(student => ({
+      name: student.studentName,
+      studentDOB: student.studentDOB,
+      grade: student.studentGrade,
+      courses: student.courses,
+      guardian: student.guardianName,
+      enrollmentDate: student.createdAt
+    }));
+    res.status(200).json(studentList);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching students', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.use(session({
   secret: 'your-secret-key',
   resave: false,
@@ -247,7 +290,7 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
 
         // Create a secure token and expiration time for the password reset
         const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
-        const resetExpires = Date.now() + 1 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
+        const resetExpires = Date.now() + 15 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
 
         // Create new tutor (role: 'tutor')
         const tutor = new User({
@@ -628,7 +671,7 @@ app.post('/tutors/reset-password-with-token/:token', async (req, res) => {
 app.post('/tutors/create-student', async (req, res) => {
   const {
     username, email, password, studentName, studentDOB, studentGrade, studentSchool,
-    guardianName, guardianEmail, guardianPhone, relationship
+    guardianName, guardianEmail, guardianPhone, relationship, courses
   } = req.body;
 
   try {
@@ -659,7 +702,8 @@ app.post('/tutors/create-student', async (req, res) => {
       guardianName,
       guardianEmail,
       guardianPhone,
-      relationship
+      relationship,
+      courses
     });
 
     // Save the student
@@ -668,6 +712,41 @@ app.post('/tutors/create-student', async (req, res) => {
   } catch (error) {
     console.error('Error creating student account:', error.message);
     res.status(500).json({ message: 'Error creating student account', error: error.message });
+  }
+});
+
+const CalendarEvent = require('./models/CalendarEvent'); // Import the model
+
+// API Route to Add Event
+app.post('/api/calendar/add', async (req, res) => {
+  try {
+      const { title, description, date, tutorId, studentIds } = req.body;
+
+      const newEvent = new CalendarEvent({
+          title,
+          description,
+          date,
+          tutor: tutorId,
+          students: studentIds
+      });
+
+      await newEvent.save();
+      res.status(201).json({ message: 'Event added successfully', event: newEvent });
+  } catch (error) {
+      console.error('Error adding event:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// API Route to Fetch Student Events
+app.get('/api/calendar/student-events/:studentId', async (req, res) => {
+  try {
+      const studentId = req.params.studentId;
+      const events = await CalendarEvent.find({ students: studentId }).populate('tutor');
+      res.json(events);
+  } catch (error) {
+      console.error('Error fetching student events:', error);
+      res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -764,6 +843,8 @@ app.get('/dashboard', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
+
+
 
 // Start the server
 const port = 3000;

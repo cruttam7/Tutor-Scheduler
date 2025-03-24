@@ -9,9 +9,13 @@ const studentSchema = new mongoose.Schema({
   studentGrade: { type: String, required: true },
   studentSchool: { type: String, required: true },
   guardianName: { type: String, required: true },
+  courses: [{ type: String }],
+  studentGrade: { type: String, required: true },
   guardianEmail: { type: String, required: true },
   guardianPhone: { type: String, required: true },
   relationship: { type: String, required: true },
+  courses: [{ type: String }], // ✅ New for course filtering
+
   createdAt: { type: Date, default: Date.now }
 });
 
