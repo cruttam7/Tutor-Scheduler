@@ -247,7 +247,7 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
 
         // Create a secure token and expiration time for the password reset
         const resetToken = crypto.randomBytes(32).toString('hex');  // Generate a 32-byte token
-        const resetExpires = Date.now() + 1 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
+        const resetExpires = Date.now() + 15 * 60 * 1000;  // Set the expiration time for 1 minute from now (can adjust)
 
         // Create new tutor (role: 'tutor')
         const tutor = new User({
@@ -668,6 +668,44 @@ app.post('/tutors/create-student', async (req, res) => {
   } catch (error) {
     console.error('Error creating student account:', error.message);
     res.status(500).json({ message: 'Error creating student account', error: error.message });
+  }
+});
+
+const CalendarEvent = require('./models/CalendarEvent'); // Import the model
+
+// API Route to Add Event
+app.post('/api/calendar/add', async (req, res) => {
+  try {
+      const { title, description, date, tutorId, studentIds } = req.body;
+
+      // Ensure IDs are in ObjectId format
+      const tutorObjectId = new mongoose.Types.ObjectId(tutorId);
+      const studentObjectIds = studentIds.map(id => new mongoose.Types.ObjectId(id));
+
+      const newEvent = new CalendarEvent({
+          title,
+          description,
+          date,
+          tutor: tutorObjectId,
+          students: studentObjectIds
+      });
+
+      await newEvent.save();
+      res.status(201).json({ message: 'Event added successfully', event: newEvent });
+  } catch (error) {
+      console.error('Error adding event:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+// API Route to Fetch Student Events
+app.get('/api/calendar/student-events/:studentId', async (req, res) => {
+  try {
+      const studentId = req.params.studentId;
+      const events = await CalendarEvent.find({ students: studentId }).populate('tutor');
+      res.json(events);
+  } catch (error) {
+      console.error('Error fetching student events:', error);
+      res.status(500).json({ message: 'Internal server error' });
   }
 });
 
