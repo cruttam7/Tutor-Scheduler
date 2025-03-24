@@ -233,3 +233,47 @@ button {
 button:hover {
     background-color: #1b5e20;
 }
+
+/*new one for the hide and show password/* Password container for stable layout *//* Password container for stable layout */
+/* Password container for stable layout */
+.password-container {
+    position: relative;
+    width: 100%;
+    height: 50px;  /* Fixed height to prevent resizing */
+}
+
+/* Style for the password input field */
+.password-container input[type="password"],
+.password-container input[type="text"] {
+    width: 100%;  /* Make the input field take full width */
+    height: 100%;  /* Ensure the input field fills the container's height */
+    padding-right: 40px;  /* Space for the eye icon */
+    box-sizing: border-box;  /* Include padding and borders in the total size */
+    font-size: 16px;  /* Adjust font size */
+    border: 1px solid #ccc;  /* Border style */
+    border-radius: 8px;  /* Rounded corners */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;  /* Add smooth transitions */
+}
+
+/* Eye icon style */
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px;  /* Position the icon to the right */
+    top: 50%;  /* Vertically center the icon */
+    transform: translateY(-50%);  /* Fix vertical centering */
+    cursor: pointer;
+    color: #888;  /* Icon color */
+    font-size: 1.2em;  /* Adjust the size */
+    z-index: 2;  /* Make sure the icon stays on top */
+}
+
+/* Hover effect for the eye icon */
+.password-container .toggle-password:hover {
+    color: #000;
+}
+
+/* Input focus effect */
+.password-container input:focus {
+    border-color: #43b46e;
+    box-shadow: 0 0 6px rgba(67, 180, 110, 0.5);
+}

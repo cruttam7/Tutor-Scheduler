@@ -15,8 +15,9 @@
           
         }
 
-        body {
-            font-family: 'Comic Sans MS', sans-serif;
+        body {font-family: 'Arial', sans-serif;
+            text-decoration: none;  /* No underline */
+            font-style: normal;     /* No italics */
             background-color: #f4f4f9;
             color: #333;
             display: flex;
@@ -47,6 +48,9 @@ height: 80px;        }
             text-decoration: none;
             padding: 10px 20px;
             transition: background-color 0.3s;
+            text-decoration: none;  /* No underline */
+            font-style: normal;     /* No italics */
+            
         }
 
         .navbar ul li a:hover {
@@ -320,30 +324,40 @@ height: 80px;        }
   
     <!-- Sidebar for Login/Logout -->
    <!-- Sidebar for Login/Logout -->
-<div class="sidebar" id="sidebar">
+   <div class="sidebar" id="sidebar">
     <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
     <h2>Student Portal</h2>
     <ul>
-   <li> <a href="#overview"><i class="fas fa-home"></i> Overview</a></li>
-   <li></li> <a href="#classes"><i class="fas fa-chalkboard"></i> My Classes</a></li>
-   <li></li> <a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a></li>
-   <li></li> <a href="#messages"><i class="fas fa-envelope"></i> Messages</a></li>
-   <li></li> <a href="#profile"><i class="fas fa-user"></i> Profile</a></li>
+        <li><a href="#overview"><i class="fas fa-home"></i> Overview</a></li>
+        <li><a href="#classes"><i class="fas fa-chalkboard"></i> My Classes</a></li>
+        <li><a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a></li>
+        <li><a href="#messages"><i class="fas fa-envelope"></i> Messages</a></li>
+        <li><a href="#profile"><i class="fas fa-user"></i> Profile</a></li>
     </ul>
+    <button class="logout-btn" onclick="window.location.href='index.html';">Logout</button>
+</div>
 
-        <button class="logout-btn" onclick="window.location.href='index.html';">Logout</button>
-
-     
-    </div>
 
     <!-- Navigation Bar -->
     <div class="navbar">
         <ul>
             <li><a href="#">Home</a></li>
           
+<<<<<<< HEAD
             
 
             <li><a href="progress.html"></i> Progress</a></li>
+=======
+<<<<<<< HEAD
+            
+
+            <li><a href="progress.html"></i> Progress</a></li>
+=======
+           
+
+            <li><a href="progress.html"> Progress</a></li>
+>>>>>>> aa4b4c0b4d210a00026e8c45e8f3e2d98954f01e
+>>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
       
             <li><a href="resources.html">Resources</a></li>
             <li><a href="help.html">Help</a></li>

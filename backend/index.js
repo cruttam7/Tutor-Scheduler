@@ -722,12 +722,24 @@ app.post('/api/calendar/add', async (req, res) => {
   try {
       const { title, description, date, tutorId, studentIds } = req.body;
 
+<<<<<<< HEAD
+=======
+      // Ensure IDs are in ObjectId format
+      const tutorObjectId = new mongoose.Types.ObjectId(tutorId);
+      const studentObjectIds = studentIds.map(id => new mongoose.Types.ObjectId(id));
+
+>>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
       const newEvent = new CalendarEvent({
           title,
           description,
           date,
+<<<<<<< HEAD
           tutor: tutorId,
           students: studentIds
+=======
+          tutor: tutorObjectId,
+          students: studentObjectIds
+>>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
       });
 
       await newEvent.save();
@@ -737,7 +749,10 @@ app.post('/api/calendar/add', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
   }
 });
+<<<<<<< HEAD
 
+=======
+>>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
 // API Route to Fetch Student Events
 app.get('/api/calendar/student-events/:studentId', async (req, res) => {
   try {
