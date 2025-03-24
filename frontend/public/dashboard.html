@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<<<<<<< HEAD
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register Student | Teacher Dashboard</title>
@@ -114,19 +113,12 @@
       margin: 4px 0;
     }
   </style>
-=======
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="dashboard.css">
-    <title>Teacher Dashboard</title>
->>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
 </head>
 <body>
   <div class="dashboard-container">
     <h1>Teacher Dashboard</h1>
     <h2>Create Student Account</h2>
 
-<<<<<<< HEAD
     <form id="createStudentForm">
       <div class="form-group">
         <label for="studentName">Student Full Name</label>
@@ -156,80 +148,9 @@
           <div class="checkbox-item"><input type="checkbox" value="Mathematics" class="course"> <label>Mathematics</label></div>
           <div class="checkbox-item"><input type="checkbox" value="English" class="course"> <label>English</label></div>
           <div class="checkbox-item"><input type="checkbox" value="Science" class="course"> <label>Science</label></div>
-=======
-        <!-- Student Registration Section -->
-        <div class="create-account-section">
-            <h2>Create Student Account</h2>
-            <form id="createStudentForm">
-                <h3>Student Information</h3>
-                <div class="form-group">
-                    <label for="studentName">Student Full Name</label>
-                    <input type="text" id="studentName" required>
-                </div>
-                <div class="form-group">
-                    <label for="studentDOB">Date of Birth</label>
-                    <input type="date" id="studentDOB" required>
-                </div>
-                <div class="form-group">
-                    <label for="studentGrade">Grade</label>
-                    <select id="studentGrade" required>
-                        <option value="">Select Grade</option>
-                        <option value="1">1st Grade</option>
-                        <option value="2">2nd Grade</option>
-                        <option value="3">3rd Grade</option>
-                        <option value="4">4th Grade</option>
-                        <option value="5">5th Grade</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="studentSchool">School Name</label>
-                    <input type="text" id="studentSchool" required>
-                </div>
-
-                <h3>Guardian Information</h3>
-                <div class="form-group">
-                    <label for="guardianName">Guardian Full Name</label>
-                    <input type="text" id="guardianName" required>
-                </div>
-                <div class="form-group">
-                    <label for="guardianEmail">Guardian Email</label>
-                    <input type="email" id="guardianEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="guardianPhone">Guardian Phone</label>
-                    <input type="tel" id="guardianPhone" required>
-                </div>
-                <div class="form-group">
-                    <label for="relationship">Relationship</label>
-                    <select id="relationship" required>
-                        <option value="">Select</option>
-                        <option value="mother">Mother</option>
-                        <option value="father">Father</option>
-                        <option value="guardian">Guardian</option>
-                    </select>
-                </div>
-
-                <h3>Account Details</h3>
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="studentEmail">Student Email</label>
-                    <input type="email" id="studentEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="studentPassword">Password</label>
-                    <input type="password" id="studentPassword" required>
-                </div>
-
-                <button class="primary-button" type="submit">Create Student Account</button>
-            </form>
->>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
         </div>
       </div>
 
-<<<<<<< HEAD
       <div class="form-group">
         <label for="guardianName">Guardian Name</label>
         <input type="text" id="guardianName" required />
@@ -325,57 +246,5 @@
       }
     });
   </script>
-=======
-        <!-- Calendar Event Section -->
-        <div class="calendar-section">
-            <h2>Add Event to Calendar</h2>
-            <div class="form-group">
-                <label for="eventTitle">Event Title</label>
-                <input type="text" id="eventTitle" required>
-            </div>
-            <div class="form-group">
-                <label for="eventDescription">Description</label>
-                <input type="text" id="eventDescription" required>
-            </div>
-            <div class="form-group">
-                <label for="eventDate">Date</label>
-                <input type="date" id="eventDate" required>
-            </div>
-            <button id="addEventButton">Add Event</button>
-        </div>
-
-    </div>
-
-    <script src="teacher_dashboard.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-
-// Add Event to Calendar
-document.getElementById('addEventButton').addEventListener('click', async () => {
-    const title = document.getElementById('eventTitle').value;
-    const description = document.getElementById('eventDescription').value;
-    const date = document.getElementById('eventDate').value;
-
-    // Replace with actual ObjectIds from logged-in tutor and student data
-    const tutorId = "65f123abc456def789123456";  // Example ObjectId (Get from session)
-    const studentIds = ["65f987abc456def789654321", "65f987abc456def789654322"];  // Example Student IDs
-
-    const response = await fetch('/api/calendar/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, date, tutorId, studentIds })
-    });
-
-    if (response.ok) {
-        alert('Event added successfully!');
-        location.reload();
-    } else {
-        alert('Failed to add event.');
-    }
-});
-
-
-    </script>
->>>>>>> d1dd5671e8c154d3e5cfb5212c7169a32db427f3
 </body>
 </html>
