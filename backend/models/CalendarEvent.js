@@ -1,11 +1,22 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const calendarEventSchema = new mongoose.Schema({
-  title: { type: String, required: true },
+const calendarEventSchema = new Schema({
+  title: String,
+  date: String,
+  time: String,
+  location: String,
   description: String,
-  date: { type: Date, required: true },
-  tutor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }]
-});
+  classType: String,
+  itemsToBring: [String],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User' // or 'Tutor' if you have separate schema
+  },
+  students: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Student'
+  }]
+}, { timestamps: true });
 
 module.exports = mongoose.model('CalendarEvent', calendarEventSchema);
