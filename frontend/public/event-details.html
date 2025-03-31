@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📅 Event Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f4f7;
+      padding: 40px;
+      margin: 0;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #34495e;
+    }
+    .event-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+    .event-box:hover {
+      transform: scale(1.02);
+    }
+    .event-actions {
+      margin-top: 10px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .copy-btn { background-color: #2980b9; color: #fff; }
+    .edit-btn { background-color: #f39c12; color: #fff; }
+    .delete-btn { background-color: #e74c3c; color: #fff; }
+    .map-link {
+      color: #3498db;
+      text-decoration: underline;
+    }
+    .back-btn, .refresh-btn, .add-btn {
+      display: inline-block;
+      background-color: #2ecc71;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      margin: 10px auto;
+    }
+    .btn-row {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .dark-mode-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #222;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    body.dark-mode {
+      background-color: #222;
+      color: #eee;
+    }
+    body.dark-mode .event-box {
+      background: #2c3e50;
+      color: white;
+    }
+
+    #eventModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #eventModal .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+    }
+    #eventModal input, #eventModal textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dark-mode-toggle" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</div>
+
+<h1>📆 Events on <span id="event-date"></span></h1>
+
+<div class="btn-row">
+  <a href="dashboard.html" class="back-btn">⬅️ Back to Dashboard</a>
+  <button class="refresh-btn" onclick="loadEvents()">🔁 Refresh</button>
+</div>
+
+<div id="event-list">Loading events...</div>
+
+<!-- Add/Edit Modal -->
+<div id="eventModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Add Event</h3>
+    <input type="text" id="title" placeholder="Event Title" required />
+    <input type="time" id="time" required />
+    <input type="text" id="location" placeholder="Location" required />
+    <input type="text" id="classType" placeholder="Class Type (e.g. Math)" required />
+    <textarea id="description" placeholder="Description (optional)"></textarea>
+    <input type="hidden" id="eventId" />
+    <button onclick="saveEvent()">💾 Save</button>
+    <button onclick="closeModal()">❌ Cancel</button>
+  </div>
+</div>
+<script>
+  const selectedDate = new URLSearchParams(window.location.search).get('date');
+  document.getElementById('event-date').textContent = selectedDate;
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+  }
+
+  function openModal(event = null) {
+    document.getElementById('eventModal').style.display = 'flex';
+    document.getElementById('modalTitle').textContent = event ? "Edit Event" : "Add Event";
+
+    if (event) {
+      document.getElementById('title').value = event.title;
+      document.getElementById('time').value = event.time;
+      document.getElementById('location').value = event.location;
+      document.getElementById('classType').value = event.classType;
+      document.getElementById('description').value = event.description || '';
+      document.getElementById('eventId').value = event._id;
+    } else {
+      document.querySelectorAll('#eventModal input, #eventModal textarea').forEach(el => el.value = '');
+      document.getElementById('eventId').value = '';
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('eventModal').style.display = 'none';
+  }
+
+  function saveEvent() {
+    const title = document.getElementById('title').value;
+    const time = document.getElementById('time').value;
+    const location = document.getElementById('location').value;
+    const classType = document.getElementById('classType').value;
+    const description = document.getElementById('description').value;
+    const id = document.getElementById('eventId').value;
+
+    const data = {
+      title, time, location, classType, description, date: selectedDate,
+      createdBy: "66013450e5d404b6c2b9861a" // ✅ Update this if needed
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/events/${id}` : '/api/events';
+
+    fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(() => {
+      closeModal();
+      loadEvents();
+    });
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
+  }
+
+  function deleteEvent(id) {
+    if (confirm("🗑️ Are you sure to delete this event?")) {
+      fetch(`/api/events/${id}`, { method: 'DELETE' })
+        .then(() => {
+          alert("Deleted!");
+          loadEvents();
+        });
+    }
+  }
+
+  function getCountdown(date, time) {
+    try {
+      if (!date || !time) return "❌ Missing date/time";
+      const dateTimeStr = `${date}T${time}`;
+      const target = new Date(dateTimeStr);
+      if (isNaN(target.getTime())) return "❌ Invalid date/time";
+
+      const now = new Date();
+      const diff = target - now;
+      if (diff <= 0) return "⏳ Already started or passed";
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      return `${hours}h ${minutes}m remaining`;
+    } catch (err) {
+      return "❌ Error in countdown";
+    }
+  }
+
+  function loadEvents() {
+    fetch("/api/events")
+      .then(res => res.json())
+      .then(events => {
+        const list = document.getElementById("event-list");
+        list.innerHTML = "";
+
+        const filtered = events.filter(ev => {
+          const d = new Date(ev.date);
+          const evDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+          return evDate === selectedDate;
+        });
+
+        if (filtered.length === 0) {
+          list.innerHTML = "<p>No events found for this date.</p>";
+          return;
+        }
+
+        filtered.forEach(ev => {
+          const box = document.createElement("div");
+          box.className = "event-box";
+
+          const studentList = Array.isArray(ev.students)
+            ? ev.students.map(s => `${s.studentName || s.name || "Unnamed"} (${s._id})`).join(', ')
+            : "No students";
+
+          box.innerHTML = `
+            <strong>${ev.title}</strong><br>
+            🕒 <b>Time:</b> ${ev.time}<br>
+            🏫 <b>Location:</b> <a href="https://maps.google.com?q=${ev.location}" class="map-link" target="_blank">${ev.location}</a><br>
+            📘 <b>Class:</b> ${ev.classType}<br>
+            📝 <b>Description:</b> ${ev.description || "No description"}<br>
+            👨‍🎓 <b>Students:</b> ${studentList}<br>
+            🔑 <b>ID:</b> <code>${ev._id}</code><br>
+            <div class="countdown">⏳ ${getCountdown(ev.date, ev.time)}</div>
+            <div class="event-actions">
+              <button class="copy-btn" onclick="copyToClipboard('${ev._id}')">📋 Copy ID</button>
+              <button class="edit-btn" onclick='openModal(${JSON.stringify(ev)})'>✏️ Edit</button>
+              <button class="delete-btn" onclick="deleteEvent('${ev._id}')">🗑️ Delete</button>
+            </div>
+          `;
+          list.appendChild(box);
+        });
+      });
+  }
+
+  loadEvents();
+</script>
+</body>
+</html>

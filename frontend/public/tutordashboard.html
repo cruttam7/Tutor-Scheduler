@@ -6,6 +6,8 @@
   <title>Teacher Dashboard with Calendar on Side</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
  <style>
     body 
     
@@ -386,6 +388,15 @@
   font-size: 12px;
 }
 
+.calendar-dot {
+  height: 8px;
+  width: 8px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  display: inline-block;
+  margin-top: 5px;
+  cursor: pointer;
+}
 
 
     /* Responsive Design */
@@ -474,16 +485,6 @@
     <div class="activity-item">Class attendance updated for Math 101</div>
   </div>
 
-  <!-- Reports Section new added by manish -->
-  <!--
-<div class="reports">
-  <h2>Reports</h2>
-  <p>Generate reports for student attendance and performance.</p>
-  <button>Download Attendance Report</button>
-  <button>Download Performance Report</button>
-</div>
--->
-
 
  
   <div class="reports">
@@ -565,14 +566,67 @@
   </div>
   
 
-  <script>
+<!-- 📅 Create Event Modal -->
+<div id="eventModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 20px; border-radius: 10px; width: 400px; position: relative;">
+    <h2 style="margin-top: 0;">📅 Create New Event</h2>
+    <form id="eventForm">
+      <form id="eventForm">
+        <label>Title:</label><br>
+        <input type="text" id="eventTitle" required><br><br>
+      
+        <label>Date:</label><br>
+        <input type="date" id="eventDate" required><br><br>
+      
+        <label>Time:</label><br>
+        <input type="time" id="eventTime" required><br><br>      
+    
+      <label>Location:</label><br>
+      <input type="text" id="eventLocation" required><br><br>
+    
+      <label>Class Type:</label><br>
+      <select id="eventClassType" required>
+        <option value="Math">📘 Math</option>
+        <option value="Art">🎨 Art</option>
+        <option value="Science">🧪 Science</option>
+        <option value="PE">🏃 PE</option>
+        <option value="Other">📚 Other</option>
+      </select><br><br>
+    
+      <label>Description:</label><br>
+      <textarea id="eventDescription" rows="2"></textarea><br><br>
+    
+      <!-- 🆕 INSERT THIS BLOCK BELOW -->
+      <label for="eventStudents">Select Students:</label><br>
+      <select id="eventStudents" multiple required></select><br><br>
+      
+        <!-- Student options will be loaded dynamically -->
+      </select>
+      <small>Hold Ctrl (Windows) or ⌘ (Mac) to select multiple students</small><br><br>
+    
+      <button type="submit" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px;">Save Event</button>
+      <button type="button" onclick="closeModal()" style="margin-left: 10px;">Cancel</button>
+    </form>    
+  </div>
+</div>
+<!-- 📌 Calendar Event Tooltip -->
+<div id="eventTooltip" style="
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 14px;
+  display: none;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 250px;
+"></div>
 
-
-
-
-
-    // JavaScript to generate calendar days and handle events
-
+<script>
+  window.onload = function () {
     const calendarBody = document.getElementById('calendar-body');
     const monthYear = document.getElementById('monthYear');
     const activityList = document.getElementById('added-activities-list');
@@ -580,52 +634,80 @@
     let currentMonth = today.getMonth();
     let currentYear = today.getFullYear();
     let activities = {};
+    let studentData = [];
 
     function generateCalendar(month, year) {
       const firstDay = (new Date(year, month)).getDay();
       const daysInMonth = 32 - new Date(year, month, 32).getDate();
-      calendarBody.innerHTML = ''; // Clear previous rows
+      calendarBody.innerHTML = '';
       monthYear.innerHTML = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
 
       let date = 1;
+
       for (let i = 0; i < 6; i++) {
         const row = document.createElement('tr');
 
         for (let j = 0; j < 7; j++) {
+          const cell = document.createElement('td');
+
           if (i === 0 && j < firstDay) {
-            const cell = document.createElement('td');
-            row.appendChild(cell);
+            row.appendChild(cell); // empty cell
           } else if (date > daysInMonth) {
             break;
           } else {
-            const cell = document.createElement('td');
             cell.textContent = date;
-            if (activities[`${year}-${month + 1}-${date}`]) {
+            const key = `${year}-${month + 1}-${date}`;
+
+            if (activities[key]) {
               const dot = document.createElement('span');
               dot.className = 'calendar-dot';
-              cell.appendChild(dot);
-            }
-            cell.addEventListener('click', function() {
-              const activity = prompt(`Add an activity for ${date}/${month + 1}/${year}:`);
-              if (activity) {
-                const activityKey = `${year}-${month + 1}-${date}`;
-                if (!activities[activityKey]) {
-                  activities[activityKey] = [];
-                }
-                activities[activityKey].push(activity);
-                updateActivityList(activityKey, activity);
 
-                if (!cell.querySelector('.calendar-dot')) {
-                  const dot = document.createElement('span');
-                  dot.className = 'calendar-dot';
-                  cell.appendChild(dot);
-                }
-              }
-            });
+              // ✅ Redirect to event-details on dot click
+              cell.addEventListener('click', () => {
+  window.location.href = `/event-details.html?date=${key}`;
+});
+
+              cell.appendChild(dot);
+
+              // ✅ Tooltip hover
+              cell.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById("eventTooltip");
+                const eventsForDay = activities[key].map(ev => `
+                  <div>
+                    <strong>${ev.title}</strong><br/>
+                    ⏰ ${ev.time}<br/>
+                    🏫 ${ev.location}<br/>
+                    📚 ${ev.classType}<br/>
+                    📝 ${ev.description || "No description"}
+                  </div>
+                `).join('<hr>');
+
+                tooltip.innerHTML = `<strong>${key}</strong><br>${eventsForDay}`;
+                tooltip.style.display = 'block';
+              });
+
+              cell.addEventListener('mousemove', (e) => {
+                const tooltip = document.getElementById("eventTooltip");
+                let left = e.pageX + 15;
+                let top = e.pageY + 15;
+
+                const maxLeft = window.innerWidth - tooltip.offsetWidth - 15;
+                const maxTop = window.innerHeight - tooltip.offsetHeight - 15;
+
+                tooltip.style.left = `${Math.min(left, maxLeft)}px`;
+                tooltip.style.top = `${Math.min(top, maxTop)}px`;
+              });
+
+              cell.addEventListener('mouseleave', () => {
+                document.getElementById("eventTooltip").style.display = 'none';
+              });
+            }
+
             row.appendChild(cell);
             date++;
           }
         }
+
         calendarBody.appendChild(row);
       }
     }
@@ -648,125 +730,176 @@
       generateCalendar(currentMonth, currentYear);
     }
 
-    function updateActivityList(key, activity) {
-      const activityItem = document.createElement('div');
-      activityItem.className = 'activity-list-item';
-      activityItem.textContent = `${key}: ${activity}`;
-      activityList.appendChild(activityItem);
-    }
+    window.previousMonth = previousMonth;
+    window.nextMonth = nextMonth;
 
-    
-
-    generateCalendar(currentMonth, currentYear);
-
-     // Function to hide button on scroll
-     window.addEventListener('scroll', function() {
-            var openBtn = document.getElementById('openBtn');
-
-            if (window.scrollY > 0) {
-                openBtn.style.display = 'none';
-            } else {
-                openBtn.style.display = 'block';
-            }
+    // 📅 Load Events
+    fetch("/api/events")
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(event => {
+          const d = new Date(event.date);
+          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+          if (!activities[key]) activities[key] = [];
+          activities[key].push(event);
         });
 
+        generateCalendar(currentMonth, currentYear);
+      })
+      .catch(err => console.error("❌ Error loading events:", err));
 
-    // Function to toggle the sidebar
-function toggleSidebar() {
+    // 📅 Create New Session → Open modal
+    document.querySelector('.action-card:first-child').onclick = () => {
+      const todayKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+      selectedDateForModal = todayKey;
+      document.getElementById("eventModal").style.display = "flex";
+    };
+
+    window.closeModal = function () {
+      document.getElementById("eventModal").style.display = "none";
+      document.getElementById("eventForm").reset();
+    };
+
+    // 📝 Submit Event
+    let selectedDateForModal = null;
+
+    document.getElementById("eventForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const title = document.getElementById("eventTitle").value;
+      const time = document.getElementById("eventTime").value;
+      const location = document.getElementById("eventLocation").value;
+      const classType = document.getElementById("eventClassType").value;
+      const description = document.getElementById("eventDescription").value;
+      const selectedStudents = Array.from(document.getElementById("eventStudents").selectedOptions).map(opt => opt.value);
+      const date = document.getElementById("eventDate").value; // ⬅️ this gets the form's date value
+
+const eventData = {
+  title,
+  date,
+  time,
+  location,
+  description,
+  classType,
+  itemsToBring: [],
+  createdBy: "66013450e5d404b6c2b9861a", // replace with real session ID later if needed
+  students: selectedStudents
+};
+
+
+      fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eventData)
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("✅ Event created!");
+          closeModal();
+          const key = date;
+          if (!activities[key]) activities[key] = [];
+          activities[key].push(data);
+          generateCalendar(currentMonth, currentYear);
+        })
+        .catch(err => {
+          console.error("❌ Error creating event:", err);
+          alert("Something went wrong!");
+        });
+    });
+
+    // 👨‍🎓 Load Students into dropdown
+    fetch('/api/students')
+      .then(res => res.json())
+      .then(students => {
+        const select = document.getElementById("eventStudents");
+        students.forEach(student => {
+          const option = document.createElement("option");
+          option.value = student._id;
+          option.text = student.studentName;
+          select.appendChild(option);
+        });
+
+        $('#eventStudents').select2({
+          placeholder: "Select students 👨‍🎓👩‍🎓",
+          width: '100%'
+        });
+      })
+      .catch(err => console.error("❌ Error loading students:", err));
+
+    // 📦 Course filter rendering
+    fetch('/api/students')
+      .then(res => res.json())
+      .then(data => {
+        studentData = data;
+        renderTable([]);
+      });
+
+    function renderTable(selectedCourses) {
+      const tableBody = document.querySelector('#students-table tbody');
+      tableBody.innerHTML = '';
+      const filtered = selectedCourses.length === 0
+        ? studentData
+        : studentData.filter(student =>
+          Array.isArray(student.courses) &&
+          selectedCourses.some(course => student.courses.includes(course))
+        );
+      filtered.forEach(student => {
+        const dob = new Date(student.studentDOB).toLocaleDateString();
+        const courses = Array.isArray(student.courses)
+          ? student.courses.join(', ')
+          : student.courses || "N/A";
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="padding: 10px;">${student.name || student.studentName}</td>
+          <td style="padding: 10px;">${dob}</td>
+          <td style="padding: 10px;">${student.grade || student.studentGrade}</td>
+          <td style="padding: 10px;">${courses}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    document.getElementById('courseFilter').addEventListener('change', () => {
+      const selected = Array.from(document.getElementById('courseFilter').selectedOptions).map(opt => opt.value);
+      renderTable(selected);
+    });
+
+    document.getElementById('clearFilterBtn').addEventListener('click', () => {
+      const courseFilter = document.getElementById('courseFilter');
+      Array.from(courseFilter.options).forEach(option => option.selected = false);
+      renderTable([]);
+    });
+
+    // Sidebar toggle
+    document.getElementById('openBtn').addEventListener('click', toggleSidebar);
+    document.getElementById('closeBtn').addEventListener('click', toggleSidebar);
+
+    function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const mainContent = document.getElementById('mainContent');
       const openBtn = document.getElementById('openBtn');
-
-      // Toggle sidebar active state
       sidebar.classList.toggle('active');
       mainContent.classList.toggle('shrink');
-
-      // Show or hide the open button depending on the sidebar's state
-      if (sidebar.classList.contains('active')) {
-        openBtn.style.display = 'none';  // Hide open button when sidebar is active
-      } else {
-        openBtn.style.display = 'block'; // Show open button when sidebar is inactive
-      }
+      openBtn.style.display = sidebar.classList.contains('active') ? 'none' : 'block';
     }
 
+    document.getElementById("registerCard").onclick = function () {
+      window.location.href = "dashboard.html";
+    };
+  };
 
-    //fetching the new student ny manish
-    // Fetch and display student list
-    let studentData = [];
+  // 📍 View Details Navigation
+  window.viewEventDetails = function (eventId) {
+    window.location.href = `/event-details.html?id=${eventId}`;
+  }
+</script>
 
-function renderTable(selectedCourses) {
-  const tableBody = document.querySelector('#students-table tbody');
-  tableBody.innerHTML = '';
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  const filtered = selectedCourses.length === 0
-    ? studentData
-    : studentData.filter(student =>
-        Array.isArray(student.courses) &&
-        selectedCourses.some(course => student.courses.includes(course))
-      );
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-  filtered.forEach(student => {
-    const dob = new Date(student.studentDOB).toLocaleDateString();
-    const courses = Array.isArray(student.courses)
-      ? student.courses.join(', ')
-      : student.courses || "N/A";
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td style="padding: 10px;">${student.name}</td>
-      <td style="padding: 10px;">${dob}</td>
-      <td style="padding: 10px;">${student.grade}</td>
-      <td style="padding: 10px;">${courses}</td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
-
-// Fetch data and load initial table
-fetch('/api/students')
-  .then(response => response.json())
-  .then(data => {
-    studentData = data;
-    renderTable([]); // Show all initially
-  })
-  .catch(error => {
-    console.error('Error fetching students:', error);
-  });
-
-// Listen for multi-select changes
-document.getElementById('courseFilter').addEventListener('change', () => {
-  const selected = Array.from(document.getElementById('courseFilter').selectedOptions)
-                        .map(opt => opt.value);
-  renderTable(selected);
-});
-document.getElementById('clearFilterBtn').addEventListener('click', () => {
-  const courseFilter = document.getElementById('courseFilter');
-  Array.from(courseFilter.options).forEach(option => option.selected = false);
-  renderTable([]); // Show all students again
-});
-
-
-
-
-
-
-
-
-
-
-
-    // Add event listeners for open and close buttons
-    document.getElementById('openBtn').addEventListener('click', toggleSidebar);
-    document.getElementById('closeBtn').addEventListener('click', toggleSidebar);
- 
-
-
-
-       // JavaScript to handle the click event
-       document.getElementById("registerCard").onclick = function() {
-        window.location.href = "dashboard.html";  // Redirects to index.html when the card is clicked
-    }
-  </script>
 
 </body>
 </html>

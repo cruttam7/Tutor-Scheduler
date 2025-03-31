@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register Student | Teacher Dashboard</title>
+  <title>Teacher Dashboard</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -38,7 +38,7 @@
       font-weight: 600;
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       font-size: 15px;
@@ -48,7 +48,11 @@
       transition: border-color 0.3s ease;
     }
 
-    input:focus, select:focus {
+    textarea {
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
       border-color: #3498db;
       outline: none;
     }
@@ -57,10 +61,6 @@
       display: flex;
       gap: 15px;
       flex-wrap: wrap;
-    }
-
-    .checkbox-group label {
-      font-weight: 500;
     }
 
     .checkbox-item {
@@ -90,7 +90,7 @@
       background-color: #2980b9;
     }
 
-    #registration-result {
+    #registration-result, #event-result {
       margin-top: 20px;
       font-weight: bold;
       text-align: center;
@@ -112,13 +112,20 @@
     .preview-box p {
       margin: 4px 0;
     }
+
+    hr {
+      margin: 40px 0;
+      border: none;
+      border-top: 2px dashed #ccc;
+    }
   </style>
 </head>
 <body>
   <div class="dashboard-container">
     <h1>Teacher Dashboard</h1>
-    <h2>Create Student Account</h2>
 
+    <!-- Student Registration -->
+    <h2>👨‍🎓 Create Student Account</h2>
     <form id="createStudentForm">
       <div class="form-group">
         <label for="studentName">Student Full Name</label>
@@ -183,14 +190,66 @@
     </div>
 
     <div id="registration-result"></div>
+
+    <hr>
+
+    <!-- Class Event Form -->
+    <h2>📅 Schedule a Class</h2>
+    <form id="eventForm">
+      <div class="form-group">
+        <label for="title">Class Title</label>
+        <input type="text" name="title" required />
+      </div>
+
+      <div class="form-group">
+        <label for="date">Date</label>
+        <input type="date" name="date" required />
+      </div>
+
+      <div class="form-group">
+        <label for="time">Time</label>
+        <input type="time" name="time" required />
+      </div>
+
+      <div class="form-group">
+        <label for="location">Location (e.g. Room 2B)</label>
+        <input type="text" name="location" required />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Notes</label>
+        <textarea name="description" rows="3" placeholder="e.g. Bring notebooks and pencils"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="itemsToBring">Items to Bring (comma separated)</label>
+        <input type="text" name="itemsToBring" placeholder="e.g. Pencil, Math Book" />
+      </div>
+
+      <div class="form-group">
+        <label for="classType">Class Type</label>
+        <select name="classType">
+          <option value="Other">Choose Subject</option>
+          <option value="Math">Math</option>
+          <option value="Art">Art</option>
+          <option value="Science">Science</option>
+          <option value="PE">PE</option>
+        </select>
+      </div>
+
+      <input type="hidden" name="createdBy" value="1234567890" />
+      <button class="primary-button" type="submit">Add Event</button>
+    </form>
+
+    <div id="event-result"></div>
   </div>
 
   <script>
+    // Student registration handler
     document.getElementById("createStudentForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const selectedCourses = Array.from(document.querySelectorAll(".course:checked")).map(c => c.value);
-
       if (selectedCourses.length === 0) {
         alert("Please select at least one course.");
         return;
@@ -211,7 +270,7 @@
         relationship: "Not Specified"
       };
 
-      // Show preview before submission
+      // Show preview
       document.getElementById("preview-name").textContent = studentData.studentName;
       document.getElementById("preview-grade").textContent = studentData.studentGrade;
       document.getElementById("preview-courses").textContent = selectedCourses.join(", ");
@@ -243,6 +302,40 @@
       } catch (err) {
         console.error("Registration error:", err);
         document.getElementById("registration-result").textContent = "Something went wrong.";
+      }
+    });
+
+    // Class event submission handler
+    document.getElementById("eventForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        title: form.title.value,
+        date: form.date.value,
+        time: form.time.value,
+        location: form.location.value,
+        description: form.description.value,
+        itemsToBring: form.itemsToBring.value.split(',').map(i => i.trim()),
+        classType: form.classType.value,
+        createdBy: form.createdBy.value
+      };
+
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      const resultBox = document.getElementById("event-result");
+
+      if (res.ok) {
+        resultBox.style.color = "green";
+        resultBox.textContent = "Class event added successfully!";
+        form.reset();
+      } else {
+        resultBox.style.color = "red";
+        resultBox.textContent = result.message || "Failed to create event.";
       }
     });
   </script>
