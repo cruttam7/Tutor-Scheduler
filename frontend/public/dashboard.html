@@ -165,11 +165,27 @@
         <label for="studentEmail">Student Email</label>
         <input type="email" id="studentEmail" required />
       </div>
-
       <div class="form-group">
-        <label for="studentPassword">Password</label>
-        <input type="password" id="studentPassword" required />
+        <label for="guardianEmail">Guardian Email</label>
+        <input type="email" id="guardianEmail" required />
       </div>
+      
+      <div class="form-group">
+        <label for="guardianPhone">Guardian Phone</label>
+        <input type="tel" id="guardianPhone" required />
+      </div>
+      
+      <div class="form-group">
+        <label for="relationship">Relationship</label>
+        <select id="relationship" required>
+          <option value="">Select</option>
+          <option value="Mother">Mother</option>
+          <option value="Father">Father</option>
+          <option value="Guardian">Guardian</option>
+        </select>
+      </div>
+      
+     
 
       <button class="primary-button" type="submit">Register Student</button>
     </form>
@@ -204,11 +220,11 @@
         guardianName: document.getElementById("guardianName").value,
         username: document.getElementById("username").value,
         email: document.getElementById("studentEmail").value,
-        password: document.getElementById("studentPassword").value,
         studentSchool: "Not Provided",
-        guardianEmail: "Not Provided",
-        guardianPhone: "Not Provided",
-        relationship: "Not Specified"
+        guardianEmail: document.getElementById("guardianEmail").value,
+guardianPhone: document.getElementById("guardianPhone").value,
+relationship: document.getElementById("relationship").value,
+
       };
 
       // Show preview before submission

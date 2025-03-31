@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .dashboard {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 30px 40px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    .form-group input[type="week"] {
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: #fafafa;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input[type="week"]:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 14px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 500;
+    }
+
+    select {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .btn-submit {
+      margin-top: 25px;
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      background-color: #27ae60;
+    }
+
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: 500;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <h1>Weekly Attendance Dashboard</h1>
+
+    <div class="form-group">
+      <label for="weekInput">Select Week:</label>
+      <input type="week" id="weekInput" required />
+    </div>
+
+    <table id="attendanceTable">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Course</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="attendanceBody">
+        <!-- Dynamic rows here -->
+      </tbody>
+    </table>
+
+
+<button class="btn-submit" onclick="submitAttendance()">Submit Attendance</button>
+<div class="message" id="feedback"></div>
+
+
+
+
+<!-- 
+<h2>View Previous Records</h2>
+<div class="form-group">
+  <label for="filterWeek">Week:</label>
+  <input type="week" id="filterWeek">
+  <label for="filterCourse">Course:</label>
+  <input type="text" id="filterCourse" placeholder="Enter course">
+  <button class="btn btn-view" onclick="fetchFilteredRecords()">View Records</button>
+</div>
+
+<table id="recordsTable">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Student Name</th>
+      <th>Course</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="recordsBody"></tbody>
+</table>
+
+<div class="message" id="feedback"></div>
+</div> -->
+
+
+
+  <script>
+    async function loadStudents() {
+      try {
+        const res = await fetch('/api/students');
+        const students = await res.json();
+        const tbody = document.getElementById('attendanceBody');
+
+        students.forEach(student => {
+          const courses = Array.isArray(student.courses) ? student.courses : [];
+          courses.forEach(course => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${student.name}</td>
+              <td>${course}</td>
+              <td>
+                <select name="status-${student.name}-${course}">
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                </select>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+      } catch (err) {
+        document.getElementById('feedback').textContent = '⚠ Failed to load students.';
+        console.error(err);
+      }
+    }
+
+    async function submitAttendance() {
+  const week = document.getElementById('weekInput').value; // ✅ Move this to the top
+  const rows = document.querySelectorAll('#attendanceTable tbody tr');
+  const records = [];
+
+  rows.forEach(row => {
+    const studentName = row.children[0].textContent;
+    const course = row.children[1].textContent;
+    const status = row.children[2].querySelector('select').value;
+
+    records.push({ studentName, course, status, week });
+  });
+
+  try {
+    const res = await fetch('/api/attendance/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ week, records })
+    });
+
+    const result = await res.json();
+    document.getElementById('feedback').textContent = result.message;
+  } catch (err) {
+    console.error('Error submitting attendance:', err);
+    document.getElementById('feedback').textContent = '❌ Failed to submit attendance.';
+  }
+}
+
+// //added async
+// function getDateFromWeek(weekString) {
+//   const [year, week] = weekString.split('-W').map(Number);
+//   const simple = new Date(year, 0, 1 + (week - 1) * 7);
+//   const dow = simple.getDay();
+//   const monday = simple;
+//   if (dow <= 4) {
+//     monday.setDate(simple.getDate() - simple.getDay() + 1);
+//   } else {
+//     monday.setDate(simple.getDate() + 8 - simple.getDay());
+//   }
+//   return monday;
+// }
+
+// async function fetchFilteredRecords() {
+//   const week = document.getElementById('filterWeek').value;
+//   const course = document.getElementById('filterCourse').value;
+//   const query = new URLSearchParams();
+
+//   if (week) {
+//     try {
+//       const startOfWeek = getDateFromWeek(week);
+//       query.append('date', startOfWeek.toISOString());
+//     } catch (err) {
+//       console.error('Invalid week format:', err);
+//       document.getElementById('feedback').textContent = 'Invalid week format selected.';
+//       return;
+//     }
+//   }
+
+//   if (course) {
+//     query.append('course', course);
+//   }
+
+//   try {
+//     const res = await fetch(`/api/attendance/records?${query.toString()}`);
+    
+//     if (!res.ok) {
+//       const errorText = await res.text();
+//       throw new Error(`Server error: ${res.status} - ${errorText}`);
+//     }
+
+//     const data = await res.json();
+//     const tbody = document.getElementById('recordsBody');
+//     tbody.innerHTML = '';
+
+//     data.forEach(entry => {
+//       const date = new Date(entry.date).toLocaleDateString();
+//       entry.records.forEach(r => {
+//         const row = document.createElement('tr');
+//         row.innerHTML = `
+//           <td>${date}</td>
+//           <td>${r.studentName}</td>
+//           <td>${r.course}</td>
+//           <td>${r.status}</td>
+//         `;
+//         tbody.appendChild(row);
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error fetching records:', error);
+//     document.getElementById('feedback').textContent = '⚠ Failed to load attendance records.';
+//   }
+// }
+
+
+    document.addEventListener('DOMContentLoaded', loadStudents);
+  </script>
+</body>
+</html>
