@@ -49,12 +49,14 @@ const CalendarEvent = require('./models/CalendarEvent'); // Make sure the file i
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'your-email@gmail.com',        // 🔐 Replace with your Gmail
-    pass: 'your-app-password-here'       // 🔐 Use an app password, not regular password
+    user: 'uttam.dhakal777@gmail.com',        // 🔐 Replace with your Gmail
+    pass: 'iuja qjii ujva wkev'       // 🔐 Use an app password, not regular password
   }
 });
 
-// 🔒 Middleware: Admin Authentication Check
+//---------------------------------ADMIN---------------------------------------------------------------------
+
+// 🔒 Middleware: Admin Authentication Check 
 const adminAuth = (req, res, next) => {
   if (req.session && req.session.admin) {
     next(); // ✅ Admin is authenticated
@@ -93,6 +95,7 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
+
 // 🔓 Admin Logout
 app.post('/logout', (req, res) => {
   if (req.session) {
@@ -106,6 +109,8 @@ app.post('/logout', (req, res) => {
     res.status(400).json({ message: '⚠️ No active session' });
   }
 });
+
+//--------------------------------------TUTOR---------------------------------------------------------------------
 
 // 👩‍🏫 Tutor Login
 app.post('/login', async (req, res) => {
@@ -127,6 +132,9 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: '⚠️ Error logging in' });
   }
 });
+
+
+//--------------------------------------STUDENT---------------------------------------------------------------------
 
 // 🧒 Student Login
 app.post('/students/login', async (req, res) => {
