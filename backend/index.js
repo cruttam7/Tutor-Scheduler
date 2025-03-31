@@ -14,6 +14,8 @@ const app = express();
 // Middleware to serve static files from the 'frontend/public' folder
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
+app.use(express.json());
+
 
 
 // Middleware setup to parse JSON request bodies
@@ -62,13 +64,15 @@ app.get('/admin/login', (req, res) => {
 //new backend code by manish
 app.get('/api/students', async (req, res) => {
   try {
-    const students = await Student.find({}, 'studentName studentDOB studentGrade courses guardianName createdAt');
+    const students = await Student.find({}, 'studentName studentGrade courses guardianName guardianEmail guardianPhone createdAt');
     const studentList = students.map(student => ({
       name: student.studentName,
       studentDOB: student.studentDOB,
       grade: student.studentGrade,
       courses: student.courses,
-      guardian: student.guardianName,
+      guardianName: student.guardianName ,
+      guardianEmail: student.guardianEmail ,
+      guardianPhone: student.guardianPhone ,
       enrollmentDate: student.createdAt
     }));
     res.status(200).json(studentList);
@@ -667,30 +671,76 @@ app.post('/tutors/reset-password-with-token/:token', async (req, res) => {
 });
 
 
-// Define the /tutors/create-student route for tutors to create student accounts
+// // Define the /tutors/create-student route for tutors to create student accounts
+// app.post('/tutors/create-student', async (req, res) => {
+//   const {
+//     username, email, password, studentName, studentDOB, studentGrade, studentSchool,
+//     guardianName, guardianEmail, guardianPhone, relationship, courses
+//   } = req.body;
+
+//   try {
+//     // Validate required fields
+//     if (!username || !email || !password || !studentName || !studentDOB || !studentGrade || 
+//       !studentSchool || !guardianName || !guardianEmail || !guardianPhone || !relationship) {
+//       return res.status(400).json({ message: 'All fields are required' });
+//     }
+
+//     // Check if the student username or email already exists
+//     const existingStudent = await Student.findOne({ $or: [{ email }, { username }] });
+//     if (existingStudent) {
+//       return res.status(400).json({ message: 'Username or email already in use by another student' });
+//     }
+
+//     // Hash the password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     // Create new student
+//     const student = new Student({
+//       username,
+//       email,
+//       password: hashedPassword,
+//       studentName,
+//       studentDOB,
+//       studentGrade,
+//       studentSchool,
+//       guardianName,
+//       guardianEmail,
+//       guardianPhone,
+//       relationship,
+//       courses
+//     });
+
+//     // Save the student
+//     await student.save();
+//     res.status(201).json({ message: 'Student account created successfully' });
+//   } catch (error) {
+//     console.error('Error creating student account:', error.message);
+//     res.status(500).json({ message: 'Error creating student account', error: error.message });
+//   }
+// });
+
+//addedby manish
 app.post('/tutors/create-student', async (req, res) => {
   const {
-    username, email, password, studentName, studentDOB, studentGrade, studentSchool,
+    username, email, studentName, studentDOB, studentGrade, studentSchool,
     guardianName, guardianEmail, guardianPhone, relationship, courses
   } = req.body;
-
   try {
-    // Validate required fields
-    if (!username || !email || !password || !studentName || !studentDOB || !studentGrade || 
-      !studentSchool || !guardianName || !guardianEmail || !guardianPhone || !relationship) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
+    // ✅ Prevent duplicate email or username
+    const existingStudent = await Student.findOne({
+      $or: [{ email }, { username }]
+    });
 
-    // Check if the student username or email already exists
-    const existingStudent = await Student.findOne({ $or: [{ email }, { username }] });
     if (existingStudent) {
-      return res.status(400).json({ message: 'Username or email already in use by another student' });
+      return res.status(400).json({ message: 'Username or email is already in use.' });
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+  
+    const generatedPassword = crypto.randomBytes(6).toString('hex');
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = Date.now() + 15 * 60 * 1000;
 
-    // Create new student
     const student = new Student({
       username,
       email,
@@ -703,17 +753,113 @@ app.post('/tutors/create-student', async (req, res) => {
       guardianEmail,
       guardianPhone,
       relationship,
-      courses
+      courses,
+      resetPasswordToken: resetToken,
+      resetPasswordExpires: resetExpires,
+      firstLogin: true
     });
 
-    // Save the student
-    await student.save();
-    res.status(201).json({ message: 'Student account created successfully' });
+    await student.save();   
+
+    const changePasswordLink = `http://localhost:3000/admin/change-password-student.html?token=${resetToken}`;
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: email || guardianEmail,
+      subject: 'Welcome to the Learning Platform!',
+      text: `Hello ${studentName},\n\nYour account has been created.\n\n` +
+            `Username: ${username}\n` +
+            `Temporary Password: ${generatedPassword}\n\n` +
+            `Click the link below to change your password (valid for 15 minutes):\n${changePasswordLink}\n\n` +
+            `Thanks!`
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error('Email failed:', err);
+        return res.status(500).json({ message: 'Failed to send email' });
+      }
+      console.log('Email sent:', info.response);
+      return res.status(201).json({ message: 'Student registered and email sent with temporary credentials.' });
+    });
+
   } catch (error) {
-    console.error('Error creating student account:', error.message);
-    res.status(500).json({ message: 'Error creating student account', error: error.message });
+    console.error('Error creating student:', error.message);
+    return res.status(500).json({ message: 'Error creating student account' });
   }
 });
+
+
+
+
+
+
+
+app.post('/students/change-password-student/:token', async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const student = await Student.findOne({
+      resetPasswordToken: req.params.token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!student) {
+      return res.status(400).json({ message: 'Reset token is invalid or expired.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+
+    student.password = await bcrypt.hash(newPassword, 10);
+    student.firstLogin = false;
+    student.resetPasswordToken = undefined;
+    student.resetPasswordExpires = undefined;
+
+    await student.save();
+    res.status(200).json({ message: 'Password changed successfully.' });
+  } catch (err) {
+    console.error('Error changing student password:', err.message);
+    res.status(500).json({ message: 'Something went wrong.' });
+  }
+});
+
+
+
+
+
+//added upto here
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const CalendarEvent = require('./models/CalendarEvent'); // Import the model
 
@@ -847,8 +993,98 @@ app.get('*', (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+//working
+// app.post('/api/attendance/submit', async (req, res) => {
+//   try {
+//     const { records } = req.body;
+
+//     if (!records || !Array.isArray(records)) {
+//       return res.status(400).json({ message: 'Invalid attendance data' });
+//     }
+
+//     const newEntry = new Attendance({ records });
+//     await newEntry.save();
+
+//     res.status(201).json({ message: 'Attendance saved successfully' });
+//   } catch (error) {
+//     console.error('Error saving attendance:', error.message);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+// Route to fetch student usernames and their courses
+
+const Attendance = require('./models/Attendance');
+
+app.post('/api/attendance/submit', async (req, res) => {
+  try {
+    const { records, week } = req.body;
+
+    if (!week || !records || !Array.isArray(records)) {
+      return res.status(400).json({ message: 'Invalid attendance data or missing week' });
+    }
+
+    const newAttendance = new Attendance({ week, records });
+    await newAttendance.save();
+
+    res.status(201).json({ message: 'Attendance saved successfully' });
+  } catch (err) {
+    console.error('Attendance Save Error:', err.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/// fo rthe view records
+// // Route to fetch attendance records with filters
+// app.get('/api/attendance/records', async (req, res, next) => {
+//   try {
+//     const { studentName, date, course } = req.query;
+//     const query = {};
+
+//     if (studentName) query['records.studentName'] = studentName;
+//     if (course) query['records.course'] = course;
+//     if (date) {
+//       const parsedDate = new Date(date);
+//       parsedDate.setHours(0, 0, 0, 0);
+//       const nextDay = new Date(parsedDate);
+//       nextDay.setDate(parsedDate.getDate() + 7);
+//       query.date = { $gte: parsedDate, $lt: nextDay };
+//     }
+
+//     const records = await Attendance.find(query);
+//     res.status(200).json(records);
+//   } catch (error) {
+//     next(error); // Pass error to the error handler
+//   }
+// });
+
+
+
+
+
 // Start the server
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+
 });
