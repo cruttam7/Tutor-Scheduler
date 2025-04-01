@@ -13,6 +13,13 @@
     
     
     
+
+
+
+
+
+
+    
     
     {
       font-family: Arial, sans-serif;
@@ -89,7 +96,7 @@
       position: fixed;
       top: 20px;
       left: 20px;
-      background-color: #34495e;
+      background-color: transparent;
       color: white;
       border: none;
       padding: 10px 15px;
@@ -435,9 +442,10 @@
     <p>Welcome, Manish</p>
   </div>
     <!-- Open Sidebar Button -->
-    <button class="open-btn" id="openBtn">
-        <i class="fas fa-bars"></i> 
-      </button>
+    <button class="open-btn" id="openBtn" onclick="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+    
     
 </button>
 <div class="sidebar" id="sidebar">
@@ -512,17 +520,15 @@
       </div>
       <small>Hold Ctrl (or Cmd on Mac) to select multiple courses</small>
     </div>
-    
-  
     <table id="students-table" border="1" style="width: 100%; border-collapse: collapse;">
       <thead style="background-color: #3498db; color: white;">
         <tr>
-          <<th style="padding: 10px;">Name</th>
-          <th style="padding: 10px;">Guardian Name</th>
-          <th style="padding: 10px;">Guardian Email</th>
-          <th style="padding: 10px;">Guardian Phone</th>
+          <th style="padding: 10px;">Name</th>
           <th style="padding: 10px;">Grade</th>
           <th style="padding: 10px;">Courses</th>
+          <th style="padding: 10px;">Guardian Name</th>
+          <th style="padding: 10px;">Guardian Phone</th>
+          <th style="padding: 10px;">Guardian Email</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -629,6 +635,30 @@
 
 <script>
   window.onload = function () {
+
+//     function toggleSidebar() {
+//   const sidebar = document.getElementById('sidebar');
+//   sidebar.classList.toggle('active');
+// }
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const openBtn = document.getElementById('openBtn');
+  const icon = openBtn.querySelector('i');
+
+  sidebar.classList.toggle('active');
+
+  // Toggle visibility of the icon inside the button
+  icon.style.display = sidebar.classList.contains('active') ? 'none' : 'inline';
+}
+
+
+
+
+document.getElementById('openBtn').addEventListener('click', toggleSidebar);
+
+document.getElementById('closeBtn').addEventListener('click', toggleSidebar);
+
     const calendarBody = document.getElementById('calendar-body');
     const monthYear = document.getElementById('monthYear');
     const activityList = document.getElementById('added-activities-list');
@@ -663,6 +693,8 @@
             if (activities[key]) {
               const dot = document.createElement('span');
               dot.className = 'calendar-dot';
+
+            
 
               // ✅ Redirect to event-details on dot click
               cell.addEventListener('click', () => {
@@ -737,18 +769,20 @@
 
     // 📅 Load Events
     fetch("/api/events")
-      .then(res => res.json())
-      .then(data => {
-        data.forEach(event => {
-          const d = new Date(event.date);
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-          if (!activities[key]) activities[key] = [];
-          activities[key].push(event);
-        });
+  .then(res => res.json())
+  .then(data => {
+    console.log("📦 Events loaded:", data); // just in case
+    data.forEach(event => {
+      const d = new Date(event.date);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      if (!activities[key]) activities[key] = [];
+      activities[key].push(event);
+    });
 
-        generateCalendar(currentMonth, currentYear);
-      })
-      .catch(err => console.error("❌ Error loading events:", err));
+    generateCalendar(currentMonth, currentYear);
+  })
+  .catch(err => console.error("❌ Error loading events:", err));
+
 
     // 📅 Create New Session → Open modal
     document.querySelector('.action-card:first-child').onclick = () => {
@@ -756,6 +790,12 @@
       selectedDateForModal = todayKey;
       document.getElementById("eventModal").style.display = "flex";
     };
+//open attendance
+
+    document.getElementById("attendanceCard").onclick = function () {
+  window.location.href = "attendance.html";
+};
+
 
     window.closeModal = function () {
       document.getElementById("eventModal").style.display = "none";
@@ -809,24 +849,29 @@ const eventData = {
         });
     });
 
-    // 👨‍🎓 Load Students into dropdown
-    fetch('/api/students')
-      .then(res => res.json())
-      .then(students => {
-        const select = document.getElementById("eventStudents");
-        students.forEach(student => {
-          const option = document.createElement("option");
-          option.value = student._id;
-          option.text = student.studentName;
-          select.appendChild(option);
-        });
+    
+    // 👨‍🎓 Load Students into dropdown (used in event creation modal)
+fetch('/api/students/min')
+  .then(res => res.json())
+  .then(students => {
+    const select = document.getElementById("eventStudents");
+    select.innerHTML = ''; // Clear old options if any
 
-        $('#eventStudents').select2({
-          placeholder: "Select students 👨‍🎓👩‍🎓",
-          width: '100%'
-        });
-      })
-      .catch(err => console.error("❌ Error loading students:", err));
+    students.forEach(student => {
+      const option = document.createElement("option");
+      option.value = student._id;
+      option.text = student.studentName;
+      select.appendChild(option);
+    });
+
+    // Apply Select2
+    $('#eventStudents').select2({
+      placeholder: "Select students 👨‍🎓👩‍🎓",
+      width: '100%'
+    });
+  })
+  .catch(err => console.error("❌ Error loading student dropdown:", err));
+
 
     // 📦 Course filter rendering
     fetch('/api/students')
@@ -856,10 +901,12 @@ function renderTable(selectedCourses) {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td style="padding: 10px;">${student.name}</td>
-      <td style="padding: 10px;">${dob}</td>
-      <td style="padding: 10px;">${student.grade}</td>
-      <td style="padding: 10px;">${courses}</td>
-    `;
+          <td style="padding: 10px;">${student.grade}</td>
+          <td style="padding: 10px;">${student.courses.join(', ')}</td>
+          <td style="padding: 10px;">${student.guardianName}</td>
+          <td style="padding: 10px;">${student.guardianPhone}</td>
+          <td style="padding: 10px;">${student.guardianEmail}</td>
+        `;
     tableBody.appendChild(row);
   });
 }
@@ -886,6 +933,7 @@ function renderTable(selectedCourses) {
        document.getElementById("registerCard").onclick = function() {
         window.location.href = "dashboard.html";  // Redirects to index.html when the card is clicked
     }
+  };
   </script>
 
 <!-- jQuery (required for Select2) -->
