@@ -138,6 +138,14 @@
             margin-right: 10px;
         }
 
+        .sidebar ul li a.active {
+    background-color: #2ecc71;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+}
+
+
         /* Close Button Styling */
         .close-btn {
             background-color: transparent;
@@ -293,6 +301,19 @@
             margin-bottom: 15px;
         }
 
+        /* piechart */
+        .chart-container {
+  width: 80x;   /* set your preferred width */
+  height: 8px;  /* set your preferred height */
+  margin: 40 ; /* optional: center the chart */
+}
+
+#courseChart {
+  width: 40%  !important;
+  height: 40% !important;
+}
+
+
         /* Responsive layout */
         @media (max-width: 768px) {
             .container {
@@ -311,6 +332,12 @@
             }
         }
     </style>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -366,6 +393,45 @@
             <div id="totalTutors" class="stat-box">Total Tutors: Loading...</div>
             <div id="totalStudents" class="stat-box">Total Students: Loading...</div>
         </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+
+        <div class="admin-actions">
+            <h2>Course Distribution</h2>
+            <canvas id="courseChart" width="400" height="300"></canvas>
+          </div>
+          
+
+
+
+<!-- Recent Registrations -->
+<div class="admin-actions">
+    <h2>Recent Registrations</h2>
+    <div id="recentRegistrations" class="actions-grid"></div>
+</div>
+
+
+//new one
+<div id="recentRegistrations" class="actions-grid"></div>
+
+
+
+
+
 
         <!-- Admin Actions Section -->
         <div class="admin-actions">
@@ -448,7 +514,8 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 const response = await fetch('/admin/info');
                 const adminInfo = await response.json();
-                document.getElementById('adminInfo').textContent = `Hi, ${adminInfo.username}!`;
+                document.getElementById('adminInfo').innerHTML = `<h1>Hi, ${adminInfo.username}!</h1>`;
+
             } catch (error) {
                 document.getElementById('adminInfo').textContent = 'Error fetching admin info.';
             }
@@ -456,21 +523,100 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 
         // Fetch and display the stats
         async function fetchStats() {
-            try {
-                const response = await fetch('/admin/stats');
-                const stats = await response.json();
+    try {
+        const response = await fetch('/admin/stats', {
+            method: 'GET',
+            credentials: 'include' // ⬅️ CRUCIAL for session-based login
+        });
 
-                // Update stats
-                document.getElementById('totalTutors').textContent = `Total Tutors: ${stats.totalTutors}`;
-                document.getElementById('totalStudents').textContent = `Total Students: ${stats.totalStudents}`;
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            }
+        if (!response.ok) {
+            console.error('Failed to fetch stats:', response.status);
+            return;
         }
 
-        // Load admin info, stats, and update chart once the DOM is ready
-        document.addEventListener('DOMContentLoaded', fetchAdminInfo);
-        document.addEventListener('DOMContentLoaded', fetchStats);
+        const stats = await response.json();
+        console.log('Stats:', stats); // Debugging
+
+        // Update the stats text
+        document.getElementById('totalTutors').textContent = `Total Tutors: ${stats.totalTutors}`;
+        document.getElementById('totalStudents').textContent = `Total Students: ${stats.totalStudents}`;
+
+        // Update Recent Registrations
+        const container = document.getElementById('recentRegistrations');
+        container.innerHTML = '';
+        stats.recentRegistrations.forEach(person => {
+            const card = document.createElement('div');
+            card.classList.add('action-card');
+            card.innerHTML = `
+                <i class="fas fa-user action-icon"></i>
+                <h3>${person.username || person.studentName || 'N/A'}</h3>
+                <p>${person.email || 'No email'}</p>
+                <span style="color: #888;">${person.role ? person.role.toUpperCase() : 'UNKNOWN'}</span>
+            `;
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+    }
+}
+
+async function loadCourseDistribution() {
+    try {
+        const response = await fetch('/course-distribution', { // ← HERE!
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        console.log('Course distribution:', data);
+
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+
+        const ctx = document.getElementById('courseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#2ecc71', '#3498db', '#e67e22', '#9b59b6', '#f1c40f']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Percentage of Students by Course'
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading course distribution:', error);
+    }
+}
+
+
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+//         fetchAdminInfo();
+//         fetchStats();
+//     });
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAdminInfo();
+    fetchStats();
+    loadCourseDistribution(); // ✅ Load pie chart
+});
+
     </script>
 </body>
 

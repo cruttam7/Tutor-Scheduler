@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutor Login</title>
     <link rel="stylesheet" href="login.css">
@@ -12,18 +14,24 @@
         <div class="form-box">
             <h1>Tutor Login</h1>
             <form id="loginForm">
-                <input type="email" id="loginEmail" placeholder="Email" required><br>
+                <input type="email" id="email" name="email" placeholder="Email" required><br>
+
+                <!-- Password Input with Toggle Eye Icon -->
                 <div class="password-container">
-                    <input type="password" id="loginPassword" placeholder="Password" required><i class="fas fa-eye toggle-password" id="togglePassword"></i>
-                </div>    
-                            <button type="submit">Login</button>
+                    <input type="password" id="password" placeholder="Password" required>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                </div>
                 
+                <!-- Login Button -->
+                <button type="submit">Login</button>
+    
+                <!-- Forgot Password Link -->
+                <div class="forgot-password">
+                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
             </form>
 
-            <!-- Forgot Password Link -->
-            <div class="forgot-password">
-                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-            </div>
+         
     
             <div id="message"></div>
         </div>
@@ -137,8 +145,8 @@
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                const email = document.getElementById('loginEmail').value;
-const password = document.getElementById('loginPassword').value;
+                const email = document.getElementById('email').value;
+                 const password = document.getElementById('password').value;
 
 
                 const response = await fetch('/login', {
@@ -189,6 +197,20 @@ const password = document.getElementById('loginPassword').value;
                 }
             });
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+    const togglePassword = document.querySelector("#togglePassword");
+    const passwordField = document.querySelector("#password");
+
+    togglePassword.addEventListener("click", function () {
+        // Toggle the type attribute of the password field
+        const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+        passwordField.setAttribute("type", type);
+
+        // Toggle the eye icon class between fa-eye and fa-eye-slash
+        this.classList.toggle("fa-eye-slash");
+    });
+});
     </script>
 
     <style>

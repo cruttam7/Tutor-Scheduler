@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Form with Modal</title>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #28a745;
+      --background-color: #f0f8ff;
+      --form-background: #ffffff;
+      --input-background: #e9f7ff;
+      --button-hover: #0056b3;
+      --hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--background-color);
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .page-heading {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .page-heading .white {
+      color: #000;
+    }
+
+    .page-heading .green {
+      color: var(--secondary-color);
+    }
+
+    .main-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      max-width: 960px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .contact-form {
+      flex: 1 1 400px;
+      background: var(--form-background);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transition: 0.3s ease;
+      border-top: 5px solid var(--primary-color);
+    }
+
+    .contact-form:hover {
+      transform: scale(1.01);
+      box-shadow: var(--hover-shadow);
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: var(--input-background);
+      transition: 0.3s;
+    }
+
+    .form-group label {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: var(--form-background);
+      padding: 0 6px;
+      color: #666;
+      font-size: 1rem;
+      transition: 0.2s ease;
+      pointer-events: none;
+    }
+
+    .form-group input:focus + label,
+    .form-group textarea:focus + label,
+    .form-group input:not(:placeholder-shown) + label,
+    .form-group textarea:not(:placeholder-shown) + label {
+      top: -10px;
+      left: 10px;
+      font-size: 0.85rem;
+      color: var(--primary-color);
+    }
+
+    .char-count {
+      font-size: 0.8rem;
+      text-align: right;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    input:hover, textarea:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 6px rgba(0, 123, 255, 0.1);
+    }
+
+    button {
+      width: 100%;
+      background: var(--primary-color);
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: var(--button-hover);
+      transform: scale(1.03);
+    }
+
+    .contact-details {
+      margin-top: 40px;
+      text-align: center;
+      background: var(--form-background);
+      border-left: 5px solid var(--secondary-color);
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      font-size: 1.05rem;
+    }
+
+    p span {
+      color: #333;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-heading {
+        font-size: 2rem;
+      }
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      position: relative;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .modal-content h2 {
+      color: #28a745;
+      margin-bottom: 10px;
+    }
+
+    .modal-content p {
+      font-size: 1rem;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: red;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Heading -->
+  <h1 class="page-heading">
+    <span class="white">TUTOR</span> <span class="green">SCHEDULER</span>
+  </h1>
+
+  <div class="main-container">
+    <!-- Contact Form -->
+    <form class="contact-form" onsubmit="handleSubmit(event)">
+      <h2>Contact Us</h2>
+
+      <div class="form-group">
+        <input type="text" id="name" name="name" required placeholder=" " />
+        <label for="name">Full Name</label>
+      </div>
+
+      <div class="form-group">
+        <input type="email" id="email" name="email" required placeholder=" " />
+        <label for="email">Email Address</label>
+      </div>
+
+      <div class="form-group">
+        <textarea id="message" name="message" rows="4" required maxlength="500" placeholder=" "></textarea>
+        <label for="message">Your Message</label>
+        <div class="char-count">0 / 500</div>
+      </div>
+
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+
+  <!-- Contact Info -->
+  <div class="contact-details">
+    <h3>Our Contact Details</h3>
+    <p>Email: <span>Uttam.dhakal777@gmail.com</span></p>
+    <p>Phone: <span>+61 451 369 309 </span></p>
+    <p>Address: <span>7 Ruby Avenue, Seaton</span></p>
+  </div>
+
+  <!-- Modal Popup -->
+  <div class="modal" id="thankYouModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2>🎉 Thank You!</h2>
+      <p>Your message has been sent successfully.</p>
+    </div>
+  </div>
+
+  <script>
+    function handleSubmit(event) {
+      event.preventDefault();
+      const message = document.getElementById("message").value;
+      if (message.length > 500) {
+        alert("Message exceeds character limit.");
+        return;
+      }
+
+      // Show modal
+      document.getElementById("thankYouModal").style.display = "block";
+
+      // Reset form
+      document.querySelector(".contact-form").reset();
+      document.querySelector(".char-count").textContent = "0 / 500";
+    }
+
+    function closeModal() {
+      document.getElementById("thankYouModal").style.display = "none";
+    }
+
+    function updateCharCount() {
+      const count = document.getElementById("message").value.length;
+      document.querySelector(".char-count").textContent = count + " / 500";
+    }
+
+    window.onload = () => {
+      document.getElementById("message").addEventListener("input", updateCharCount);
+    };
+  </script>
+
+</body>
+</html>

@@ -1,8 +1,3 @@
-
-
-
-
-
 // Import necessary modules at the top
 const express = require('express');
 const mongoose = require('mongoose');
@@ -425,12 +420,16 @@ app.post('/admin/register-tutor', adminAuth, async (req, res) => {
    });
    
 
+
+
+
 // Route to get quick stats for the admin dashboard
 app.get('/admin/stats', adminAuth, async (req, res) => {
     try {
         // Get the total number of tutors and students
         const totalTutors = await User.countDocuments({ role: 'tutor' });
-        const totalStudents = await User.countDocuments({ role: 'student' });
+        const totalStudents = await Student.countDocuments({});
+        console.log('🔍 totalStudents from DB:', totalStudents); // ADD THIS
 
         // Get the 5 most recent user registrations
         const recentRegistrations = await User.find()
@@ -448,6 +447,11 @@ app.get('/admin/stats', adminAuth, async (req, res) => {
         res.status(500).json({ message: 'Error fetching stats' });
     }
 });
+
+
+
+
+
 // Admin information route
 app.get('/admin/info', (req, res) => {
   if (req.session && req.session.admin) {
@@ -799,7 +803,52 @@ app.post('/students/change-password-student/:token', async (req, res) => {
 });
 
 
+// 📩 Forgot Password - Student
+app.post('/students/forgot-password', async (req, res) => {
+  const { email } = req.body;
 
+  try {
+    const student = await Student.findOne({ email });
+    if (!student) {
+      return res.status(400).json({ message: 'Student not found.' });
+    }
+
+    // Generate token and expiration (valid for 15 mins)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = Date.now() + 15 * 60 * 1000;
+
+    student.resetPasswordToken = resetToken;
+    student.resetPasswordExpires = resetExpires;
+    await student.save();
+
+    // Reset link (make sure your frontend page exists here)
+    const resetLink = `http://localhost:3000/reset-password-student.html?token=${resetToken}`;
+
+    // Email options
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: student.email,
+      subject: 'Student Password Reset Request',
+      text: `Hi ${student.name},\n\nClick the link below to reset your password. This link is valid for 15 minutes:\n\n${resetLink}\n\nIf you didn't request this, please ignore this email.`
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Error sending reset email.' });
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
+    res.status(200).json({ message: 'Password reset email has been sent to student.' });
+
+  } catch (error) {
+    console.error('Error in student forgot password:', error.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
 
 
 //added upto here
@@ -1193,6 +1242,25 @@ app.get('/api/student/details', async (req, res) => {
   }
 });
 
+//piechart showing // Route: GET /admin/course-distribution
+// Route: GET /admin/course-distribution
+app.get('/course-distribution', async (req, res) => {
+  try {
+    const students = await Student.find({}, 'courses');
+    const subjectCount = {};
+
+    students.forEach(student => {
+      student.courses.forEach(course => {
+        subjectCount[course] = (subjectCount[course] || 0) + 1;
+      });
+    });
+
+    res.status(200).json(subjectCount);
+  } catch (error) {
+    console.error('Error getting course distribution:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 // 🧾 Pages & Fallbacks
