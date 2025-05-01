@@ -11,6 +11,21 @@ const crypto = require('crypto');
 const compression = require('compression');
 
 const CalendarEvent = require('./models/CalendarEvent');
+const multer = require('multer');
+
+// 📁 Configure where files are stored
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // 📁 Your upload folder (must exist or create it)
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
 
 // Initialize the express app
 const app = express();
@@ -24,6 +39,8 @@ app.use(compression());
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 
@@ -52,6 +69,28 @@ mongoose.connect('mongodb://localhost:27017/your-database-name', {
 const User = require('./models/User');
 const Student = require('./models/Student');
 const Admin = require('./models/Admin');
+const Course = require('./models/Course');
+const Assignment = require('./models/Assignment');
+const Grade = require('./models/Grade');
+const Submission = require('./models/Submission');
+
+
+// Replace with a valid teacher's ObjectId if available
+const seedCourses = async () => {
+  const existing = await Course.find({});
+  if (existing.length === 0) {
+    const courses = ['English', 'Math', 'Science'];
+    for (const name of courses) {
+      await new Course({
+        name,
+        description: `${name} course`,
+        teacherId: '643e4a1234567890abcde123' // replace with real ObjectId
+      }).save();
+    }
+    console.log('Seeded default courses');
+  }
+};
+
 
 // Serve the admin login page
 app.get('/admin/login', (req, res) => {
@@ -610,8 +649,21 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful' });
+    // ✅ Store tutor info in session
+    req.session.tutor = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      subjects: user.subjects || []  // e.g., ['Math']
+    };
+
+    res.status(200).json({
+      message: 'Login successful',
+      tutor: req.session.tutor
+    });
+
   } catch (err) {
+    console.error('Login error:', err.message);
     res.status(500).json({ message: 'Error logging in' });
   }
 });
@@ -696,12 +748,15 @@ app.post('/tutors/reset-password-with-token/:token', async (req, res) => {
   }
 });
 
-//addedby manish
+///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+// 🔄 Updated by ChatGPT to assign tutor to student
 app.post('/tutors/create-student', async (req, res) => {
   const {
     username, email, studentName, studentDOB, studentGrade, studentSchool,
     guardianName, guardianEmail, guardianPhone, relationship, courses
   } = req.body;
+
   try {
     // ✅ Prevent duplicate email or username
     const existingStudent = await Student.findOne({
@@ -712,7 +767,14 @@ app.post('/tutors/create-student', async (req, res) => {
       return res.status(400).json({ message: 'Username or email is already in use.' });
     }
 
-  
+    // 🔐 Get tutor ID and name from session
+    const tutorId = req.session?.tutor?.id;
+    const tutorName = req.session?.tutor?.username;
+
+    if (!tutorId) {
+      return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+    }
+
     const generatedPassword = crypto.randomBytes(6).toString('hex');
     const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -731,6 +793,8 @@ app.post('/tutors/create-student', async (req, res) => {
       guardianPhone,
       relationship,
       courses,
+      assignedTutorId: tutorId,        // 🔗 Linked by ID
+      assignedTutorName: tutorName,    // 🧾 For display
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetExpires,
       firstLogin: true
@@ -764,7 +828,6 @@ app.post('/tutors/create-student', async (req, res) => {
     return res.status(500).json({ message: 'Error creating student account' });
   }
 });
-
 
 
 
@@ -961,11 +1024,24 @@ app.post('/students/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful' });
+    // ✅ Store student session
+    req.session.student = {
+      id: student._id,
+      email: student.email,
+      username: student.username,
+    };
+
+    res.status(200).json({
+      message: 'Login successful',
+      student: req.session.student
+    });
+
   } catch (error) {
+    console.error('Error during student login:', error.message);
     res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 });
+
 
 // Simple dashboard route for tutors
 app.get('/dashboard', (req, res) => {
@@ -1216,15 +1292,47 @@ app.get('/api/student/dashboard', async (req, res) => {
 });
 
 
+// 🔓 Student Logout Route
+app.post('/students/logout', (req, res) => {
+  if (req.session?.student) {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('❌ Error during logout:', err);
+        return res.status(500).json({ message: 'Logout failed' });
+      }
+      res.clearCookie('connect.sid'); // Remove session cookie
+      res.status(200).json({ message: '✅ Logged out successfully' });
+    });
+  } else {
+    res.status(400).json({ message: 'No student session found' });
+  }
+});
+
+// Serve Student Dashboard Properly
+app.get('/students/dashboard', (req, res) => {
+  if (!req.session?.student) {
+    return res.redirect('/students/login'); // If not logged in, redirect to login
+  }
+
+  res.sendFile(path.join(__dirname, '../frontend/public/studentDashboard.html'));
+});
 
 
 // 🧒 Student-Specific Events
 app.get('/api/calendar/student-events/:studentId', async (req, res) => {
   try {
-    const events = await CalendarEvent.find({ students: req.params.studentId }).populate('tutor');
-    res.json(events);
+    const studentId = req.params.studentId;
+
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: 'Invalid student ID' });
+    }
+
+    const events = await CalendarEvent.find({ students: studentId })
+      .populate('createdBy', 'username email');
+
+    res.status(200).json(events);
   } catch (error) {
-    console.error('❌ Student calendar error:', error);
+    console.error('❌ Student calendar error:', error.message);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1261,6 +1369,352 @@ app.get('/course-distribution', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// 🔐 Tutors fetch only their assigned students
+app.get('/tutors/my-students', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    const students = await Student.find({ assignedTutorId: tutorId })
+      .select('studentName studentGrade courses assignedTutorName createdAt');
+
+    res.status(200).json({ students });
+  } catch (error) {
+    console.error('Error fetching students for tutor:', error.message);
+    res.status(500).json({ message: 'Failed to fetch students' });
+  }
+});
+
+//Secure Grade Route 
+
+app.post('/grades', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  const { studentId, subject, score, maxScore, feedback } = req.body;
+
+  try {
+    // 🧠 Verify the student belongs to this tutor
+    const student = await Student.findOne({ _id: studentId, assignedTutorId: tutorId });
+
+    if (!student) {
+      return res.status(403).json({ message: 'You cannot grade this student' });
+    }
+
+    const grade = new Grade({
+      studentId,
+      subject,
+      score,
+      maxScore,
+      feedback,
+      gradedBy: tutorId
+    });
+
+    await grade.save();
+
+    res.status(201).json({ message: 'Grade submitted successfully', grade });
+
+  } catch (error) {
+    console.error('Error submitting grade:', error.message);
+    res.status(500).json({ message: 'Failed to submit grade' });
+  }
+});
+
+
+// Student View Grades Route
+
+app.get('/students/my-grades', async (req, res) => {
+  const studentId = req.session?.student?.id;
+
+  if (!studentId) {
+    return res.status(403).json({ message: 'Unauthorized: Student not logged in' });
+  }
+
+  try {
+    const grades = await Grade.find({ studentId })
+      .select('subject score maxScore feedback date gradedBy')
+      .populate('gradedBy', 'username');
+
+    res.status(200).json({ grades });
+  } catch (err) {
+    console.error('Error fetching grades for student:', err.message);
+    res.status(500).json({ message: 'Failed to fetch grades' });
+  }
+});
+
+
+//Tutor View Their Students' Grades Route
+app.get('/tutors/my-grades', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    // 🧠 Find only students assigned to this tutor
+    const students = await Student.find({ assignedTutorId: tutorId }).select('_id');
+
+    const studentIds = students.map(s => s._id);
+
+    const grades = await Grade.find({ studentId: { $in: studentIds } })
+      .populate('studentId', 'studentName studentGrade')
+      .select('subject score maxScore feedback date');
+
+    res.status(200).json({ grades });
+  } catch (err) {
+    console.error('Error fetching tutor’s grades:', err.message);
+    res.status(500).json({ message: 'Failed to fetch grades' });
+  }
+});
+
+// 📋 Update an Existing Grade (Tutor Only)
+app.patch('/grades/:id', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  const { subject, score, maxScore, feedback } = req.body;
+
+  try {
+    // 🧠 Find the grade
+    const grade = await Grade.findById(req.params.id);
+
+    if (!grade) {
+      return res.status(404).json({ message: 'Grade not found' });
+    }
+
+    // 🧠 Check tutor ownership
+    if (grade.gradedBy.toString() !== tutorId) {
+      return res.status(403).json({ message: 'You cannot edit this grade' });
+    }
+
+    // ✅ Update fields if provided
+    if (subject) grade.subject = subject;
+    if (score) grade.score = score;
+    if (maxScore) grade.maxScore = maxScore;
+    if (feedback) grade.feedback = feedback;
+
+    await grade.save();
+
+    res.status(200).json({ message: 'Grade updated successfully', grade });
+
+  } catch (error) {
+    console.error('Error updating grade:', error.message);
+    res.status(500).json({ message: 'Failed to update grade' });
+  }
+});
+
+// 🗑️ Delete an Existing Grade (Tutor Only)
+app.delete('/grades/:id', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    const grade = await Grade.findById(req.params.id);
+
+    if (!grade) {
+      return res.status(404).json({ message: 'Grade not found' });
+    }
+
+    // 🧠 Check tutor ownership
+    if (grade.gradedBy.toString() !== tutorId) {
+      return res.status(403).json({ message: 'You cannot delete this grade' });
+    }
+
+    await grade.deleteOne();
+
+    res.status(200).json({ message: 'Grade deleted successfully' });
+
+  } catch (error) {
+    console.error('Error deleting grade:', error.message);
+    res.status(500).json({ message: 'Failed to delete grade' });
+  }
+});
+
+
+// 📥 Create Assignment (Tutor Only)
+
+app.post('/assignments', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  const { title, description, dueDate, subject, assignedTo } = req.body;
+
+  try {
+    const assignment = new Assignment({
+      title,
+      description,
+      dueDate,
+      subject,
+      assignedTo: assignedTo.map(id => new mongoose.Types.ObjectId(id)),
+      createdBy: tutorId
+    });
+
+    await assignment.save();
+    res.status(201).json({ message: 'Assignment created successfully', assignment });
+  } catch (error) {
+    console.error('❌ Assignment creation error:', error.message);
+    res.status(500).json({ message: 'Failed to create assignment' });
+  }
+});
+
+// 📤 Student: Get Their Own Assignments
+
+app.get('/students/my-assignments', async (req, res) => {
+  const studentId = req.session?.student?.id;
+
+  if (!studentId) {
+    return res.status(403).json({ message: 'Unauthorized: Student not logged in' });
+  }
+
+  try {
+    const assignments = await Assignment.find({ assignedTo: studentId })
+      .select('title description dueDate subject createdAt');
+
+    res.status(200).json(assignments);
+  } catch (error) {
+    console.error('❌ Error fetching student assignments:', error.message);
+    res.status(500).json({ message: 'Failed to fetch assignments' });
+  }
+});
+
+//👨‍🏫 Tutor: View Their Created Assignments
+app.get('/tutors/my-assignments', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    const assignments = await Assignment.find({ createdBy: tutorId })
+      .populate('assignedTo', 'studentName')
+      .select('title subject dueDate createdAt');
+
+    res.status(200).json(assignments);
+  } catch (error) {
+    console.error('❌ Tutor assignment fetch error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch tutor assignments' });
+  }
+});
+
+//Student: Submit Assignment
+app.post('/assignments/submit-file', upload.single('file'), async (req, res) => {
+  const studentId = req.session?.student?.id;
+
+  if (!studentId) {
+    return res.status(403).json({ message: 'Unauthorized: Student not logged in' });
+  }
+
+  const { assignmentId, answerText } = req.body;
+  const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+  try {
+    const alreadySubmitted = await Submission.findOne({ assignmentId, studentId });
+    if (alreadySubmitted) {
+      return res.status(400).json({ message: 'Already submitted' });
+    }
+
+    const submission = new Submission({
+      assignmentId,
+      studentId,
+      answerText,
+      fileUrl
+    });
+
+    await submission.save();
+    res.status(201).json({ message: 'Assignment submitted successfully', file: fileUrl });
+  } catch (error) {
+    console.error('File submission error:', error.message);
+    res.status(500).json({ message: 'Failed to submit assignment' });
+  }
+});
+
+
+
+//Tutor: View All Submissions (for their assignments)
+
+app.get('/tutors/submissions', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    const tutorAssignments = await Assignment.find({ createdBy: tutorId }).select('_id');
+    const assignmentIds = tutorAssignments.map(a => a._id);
+
+    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } })
+      .populate('assignmentId', 'title')
+      .populate('studentId', 'studentName');
+
+    res.status(200).json(submissions);
+  } catch (error) {
+    console.error('Fetch submissions error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch submissions' });
+  }
+});
+
+// Tutor: Create Submissions for Their Students (not all students, only those assigned to them)
+app.get('/tutors/my-submissions', async (req, res) => {
+  const tutorId = req.session?.tutor?.id;
+
+  if (!tutorId) {
+    return res.status(403).json({ message: 'Unauthorized: Tutor not logged in' });
+  }
+
+  try {
+    // Find students assigned to this tutor
+    const students = await Student.find({ assignedTutorId: tutorId }).select('_id');
+    const studentIds = students.map(s => s._id);
+
+    // Find submissions from those students
+    const submissions = await Submission.find({ studentId: { $in: studentIds } })
+      .populate('assignmentId')
+      .populate('studentId', 'studentName');
+
+    const response = submissions.map(sub => ({
+      _id: sub._id,
+      assignmentId: sub.assignmentId,
+      studentId: sub.studentId._id,
+      studentName: sub.studentId.studentName,
+      submittedAt: sub.submittedAt,
+      answerText: sub.answerText,
+      fileUrl: sub.fileUrl
+    }));
+
+    res.status(200).json(response);
+  } catch (err) {
+    console.error('❌ Error fetching submissions:', err.message);
+    res.status(500).json({ message: 'Error fetching submissions' });
+  }
+});
+
+
+
+
+
+
+
+
+
 
 
 // 🧾 Pages & Fallbacks
