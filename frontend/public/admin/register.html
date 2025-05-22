@@ -360,8 +360,10 @@
         submittedAt: new Date().toISOString()
       };
 
-      try {
-        const response = await fetch('https://nlf83kc2-3000.aue.devtunnels.ms/admin/register-tutor', {
+           try {
+        const BASE_URL = window.location.origin;
+
+        const response = await fetch(`${BASE_URL}/admin/register-tutor`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include', // ✅ required for session
@@ -375,6 +377,7 @@
       } catch (err) {
         showDialog("Network error. Please try again.", false);
       }
+
 
       submitBtn.disabled = false;
       submitBtn.textContent = 'Register Tutor';
