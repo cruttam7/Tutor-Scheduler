@@ -1,0 +1,452 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    
+</head>
+<body>
+
+   <!-- Login Form Container -->
+   <div class="login-container">
+    <div class="form-box">
+        <h1>Admin Login</h1>
+
+        <!-- Login Form -->
+        <form id="adminLoginForm">
+            <!-- Email Input -->
+            <input type="email" id="email" name="email" placeholder="Email" required><br>
+
+            <!-- Password Input with Toggle Eye Icon -->
+            <div class="password-container">
+                <input type="password" id="password" placeholder="Password" required>
+                <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+            </div>
+            
+            <!-- Login Button -->
+            <button type="submit">Login</button>
+
+            <!-- Forgot Password Link -->
+            <div class="forgot-password">
+                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+            </div>
+        </form>
+
+        <!-- Feedback Message -->
+        <div id="message"></div>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Forgot Password</h2>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Please enter your registered email address:</p>
+            <form id="forgotPasswordForm">
+                <input type="email" id="forgotEmail" placeholder="Email" required><br>
+                <button type="submit">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal for Feedback -->
+<div id="messageModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="messageText"></p>
+        </div>
+    </div>
+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Function to show a modal with a message
+            function showModal(message, color) {
+                const modal = document.getElementById('messageModal');
+                const messageText = document.getElementById('messageText');
+                messageText.textContent = message;
+                messageText.style.color = color;
+
+    
+                modal.style.display = 'block';
+                modal.classList.add('fade-in');
+    
+                // Automatically close the modal after 1.5 seconds if successful
+                if (color === 'green') {
+                    setTimeout(() => {
+                        modal.classList.remove('fade-in');
+                        modal.classList.add('fade-out');
+                        setTimeout(() => {
+                            modal.style.display = 'none';
+                            modal.classList.remove('fade-out');
+                        }, 300); // Faster fade-out
+                    }, 1500); // 1.5 seconds
+                }
+            }
+
+            // Handle Forgot Password modal display
+            const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            const closeForgotModal = document.querySelector('.close-modal');
+
+            forgotPasswordLink.addEventListener('click', () => {
+                forgotPasswordModal.style.display = 'block';
+                forgotPasswordModal.classList.add('fade-in'); // Fade-in when modal is shown
+                // forgotPasswordModal.classList.add('show');
+                // togglePassword.style.display = 'none';
+
+            });
+
+            closeForgotModal.addEventListener('click', () => {
+                forgotPasswordModal.classList.remove('fade-in');
+                forgotPasswordModal.classList.add('fade-out');
+                togglePassword.style.display = 'inline';
+
+
+
+
+
+                setTimeout(() => {
+                    forgotPasswordModal.style.display = 'none';
+                    forgotPasswordModal.classList.remove('fade-out');
+                }, 300);
+            });
+
+            // Handle Forgot Password form submission
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            forgotPasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgotEmail').value;
+
+                const response = await fetch('/admin/forgot-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showModal("A password reset link has been sent to your email.", "green");
+                    forgotPasswordModal.classList.remove('fade-in');
+                    forgotPasswordModal.classList.add('fade-out');
+                    setTimeout(() => {
+                        forgotPasswordModal.style.display = 'none';
+                        forgotPasswordModal.classList.remove('fade-out');
+                    }, 300); // Close modal after fade-out
+                } else if (response.status === 404) {
+                    showModal(result.message || "Admin with this email not found.", "red");
+                } else {
+                    showModal(result.message || "Error sending reset link. Please try again.", "red");
+                }
+            });
+
+            // Handle Admin Login form submission
+            document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showModal("Login Successful!", "green");
+                    setTimeout(() => {
+                        window.location.href = '/admin/dashboard';
+                    }, 1800); // Redirect after modal fades out
+                } else if (response.status === 401) {
+                    showModal(result.message || "Invalid credentials. Please try again.", "red");
+                } else if (response.status === 404) {
+                    showModal(result.message || "Admin not found. Please check your email.", "red");
+                } else {
+                    showModal(result.message || "An unexpected error occurred. Please try again later.", "red");
+                }
+            });
+
+            // Close feedback modal when the close button is clicked
+            const closeButton = document.querySelector(".close");
+            if (closeButton) {
+                closeButton.addEventListener("click", function() {
+                    const modal = document.getElementById("messageModal");
+                    modal.style.display = 'none';
+                    modal.classList.remove('fade-in');
+                    modal.classList.remove('fade-out');
+                });
+            }
+
+            // Close modals if user clicks outside
+            window.addEventListener('click', function(event) {
+                const modal = document.querySelector('.modal');
+                if (event.target === modal) {
+                    modal.classList.remove('fade-in');
+                    modal.classList.add('fade-out');
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        modal.classList.remove('fade-out');
+                    }, 300);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+    const togglePassword = document.querySelector("#togglePassword");
+    const passwordField = document.querySelector("#password");
+
+    togglePassword.addEventListener("click", function () {
+        // Toggle the type attribute of the password field
+        const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+        passwordField.setAttribute("type", type);
+
+        // Toggle the eye icon class between fa-eye and fa-eye-slash
+        this.classList.toggle("fa-eye-slash");
+    });
+});
+
+    </script>
+
+    <style>
+/* 🌿 Reset Some Basics */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* 🌟 Background Styling */
+body {
+    background: linear-gradient(to right, #e8f5e9, #f1f8e9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* 📦 Login Container */
+.login-container {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.form-box h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #2e7d32;
+    margin-bottom: 30px;
+}
+
+/* 🧠 Input Styling */
+input[type="email"],
+input[type="text"],
+input[type="password"] {
+    padding: 14px;
+    font-size: 16px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    margin: 10px 0 20px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+    border-color: #43b46e;
+    box-shadow: 0 0 8px rgba(67, 180, 110, 0.4);
+    outline: none;
+}
+
+/* 🔐 Password Container */
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container input {
+    padding-right: 42px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    color: #999;
+    cursor: pointer;
+}
+
+.toggle-password:hover {
+    color: #2e7d32;
+}
+
+/* ✅ Submit Button */
+button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #1b5e20;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+/* 🧩 Forgot Password Link */
+.forgot-password {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.forgot-password a {
+    color: #2e7d32;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+    color: #1b5e20;
+}
+/* 
+🪟 Modal Overlay */
+.modal  {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 999;
+}
+
+/* Show Modal Class */
+.modal.show {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 🪟 Modal Content */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    width: 35%;
+    max-width: 500px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    color: #2e7d32;
+}
+
+.modal-body {
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Center Forgot Password Link */
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* ❌ Close Button */
+.close, .close-modal, .close-forgot {
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close:hover, .close-modal:hover, .close-forgot:hover {
+    color: red;
+} */
+
+/* 💬 Message Modal Text */
+#messageText {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2e7d32;
+    margin-top: 10px;
+}
+
+/* ✨ Message Modal Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 480px) {
+    .form-box {
+        padding: 25px;
+    }
+
+    .modal-content {
+        padding: 20px;
+        width: 95%;
+    }
+}
+
+</style>
+
+</body>
+</html>

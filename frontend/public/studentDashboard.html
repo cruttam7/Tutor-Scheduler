@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎓 Student Dashboard</title>
+
+ <style> /*--------------------
+  Variables & Reset
+--------------------*/
+:root {
+  --main-blue: #1976d2;
+  --main-green: #43a047;
+  --main-yellow: #fdd835;
+  --main-orange: #fb8c00;
+  --light-bg: #f4f6f8;
+  --dark: #263238;
+  --white: #ffffff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--light-bg);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/*--------------------
+  Sidebar
+--------------------*/
+.sidebar {
+  width: 230px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sidebar__title {
+  font-size: 1.25rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.sidebar__nav {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sidebar__link {
+  display: block;
+  color: var(--white);
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 4px;
+  background: #37474f;
+  transition: background 0.2s;
+}
+.sidebar__link:hover {
+  background: var(--main-blue);
+}
+.sidebar__link--btn {
+  background: #ef5350;
+  border: none;
+  cursor: pointer;
+}
+
+/*--------------------
+  Dashboard Layout
+--------------------*/
+.dashboard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Header */
+.header {
+  background: var(--main-blue);
+  color: var(--white);
+  padding: 1rem 2rem;
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; z-index: 10;
+}
+.header__title { font-size: 1.5rem; }
+.header__avatar {
+  width: 45px; height: 45px;
+  border-radius: 50%;
+  background: var(--main-yellow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; font-weight: bold;
+}
+
+/* Widgets */
+.widgets {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  padding: 1rem 2rem;
+}
+.widget {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  flex: 1 1 200px;
+}
+.widget--large { flex: 2 1 400px; }
+.widget__title { color: var(--main-blue); font-size: 1rem; margin-bottom: 0.5rem; }
+.widget__value { font-size: 1.75rem; font-weight: bold; color: var(--main-green); }
+.widget__progress {
+  background: #e0e0e0; border-radius: 6px; height: 8px; overflow: hidden; margin-top: 0.5rem;
+}
+.widget__progress-fill {
+  background: var(--main-orange); height: 100%; width: 0; transition: width 0.5s;
+}
+
+/* Grid layout for mixed sections */
+.grid-layout {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  padding: 1rem 2rem;
+}
+
+/* Buttons & Select */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--main-blue);
+  color: var(--white);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.btn:hover { background: #0d47a1; }
+
+.widget__select {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+.widget__mood-response { margin-top: 0.5rem; font-style: italic; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0.5rem;
+  }
+  .sidebar__title { display: none; }
+  .sidebar__link { flex: 1; text-align: center; margin: 0 4px; }
+  .dashboard { height: calc(100vh - 60px); }
+}
+</style>
+
+  <!-- FullCalendar & Tippy -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <h2 class="sidebar__title">📚 Menu</h2>
+    <nav class="sidebar__nav">
+      <a class="sidebar__link" href="#stats">📊 Stats</a>
+      <a class="sidebar__link" href="#calendar">📅 Calendar</a>
+      <a class="sidebar__link" href="#assignments">📝 Assignments</a>
+      <a class="sidebar__link" href="#messages">📩 Messages</a>
+      <a class="sidebar__link" href="#badges">🏅 Badges</a>
+      <a class="sidebar__link" href="#profile">🧑 Profile</a>
+      <a class="sidebar__link" href="#goals">🎯 Goals</a>
+      <a class="sidebar__link" href="#rank">👑 Rank</a>
+      <button class="sidebar__link sidebar__link--btn" onclick="logout()">🔓 Logout</button>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__greeting">
+        <h1 class="header__title">👋 Hello, <span id="studentName">Student</span>!</h1>
+      </div>
+      <div class="header__avatar" id="studentAvatar">😊</div>
+    </header>
+
+    <!-- Stats Section -->
+    <section class="widgets" id="stats">
+      <div class="widget">
+        <h2 class="widget__title">⭐ Stars Earned</h2>
+        <div class="widget__value" id="starCount">0</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">📊 Attendance</h2>
+        <div class="widget__value" id="attendancePercent">--%</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">📈 Grade Average</h2>
+        <div class="widget__value" id="gradeAverage">--%</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">🧠 XP Level</h2>
+        <div class="widget__value" id="xpLevel">Level 1</div>
+        <div class="widget__progress">
+          <div class="widget__progress-fill" id="xpBar"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calendar & Lists -->
+    <section class="grid-layout" id="calendar">
+      <div class="widget widget--large">
+        <h2 class="widget__title">📅 My Calendar</h2>
+        <div id="calendar"></div>
+      </div>
+      <div class="widget" id="assignments">
+        <h2 class="widget__title">📝 Upcoming Assignments</h2>
+        <div id="assignmentList">Loading…</div>
+      </div>
+      <div class="widget" id="messages">
+        <h2 class="widget__title">📩 Messages</h2>
+        <div id="messageList">Loading…</div>
+      </div>
+    </section>
+
+    <!-- Badges & Extras -->
+    <section class="grid-layout" id="badges">
+      <div class="widget widget--large">
+        <h2 class="widget__title">🏅 My Badges</h2>
+        <div id="badgeList">Loading badges…</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">📘 Subjects</h2>
+        <div id="subjectExplorer">Loading subjects…</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">🌟 Tip of the Day</h2>
+        <div id="dailyTip">Loading tip…</div>
+      </div>
+    </section>
+
+    <!-- Profile & Goals -->
+    <section class="grid-layout" id="profile">
+      <div class="widget widget--large">
+        <h2 class="widget__title">🧑 My Profile</h2>
+        <p><strong>Name:</strong> <span id="profileName">--</span></p>
+        <p><strong>Grade:</strong> <span id="profileGrade">--</span></p>
+        <p><strong>School:</strong> <span id="profileSchool">--</span></p>
+        <p><strong>DOB:</strong> <span id="profileDOB">--</span></p>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">📆 Today</h2>
+        <p id="currentDate">Loading…</p>
+        <p id="currentTime">Loading…</p>
+        <button class="btn" onclick="logout()">🔓 Logout</button>
+      </div>
+      <div class="widget" id="goals">
+        <h2 class="widget__title">🎯 Today's Goals</h2>
+        <ul>
+          <li>Finish 1 assignment</li>
+          <li>Attend 1 class</li>
+          <li>Read for 10 mins</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Rank & Mood & Fun -->
+    <section class="grid-layout" id="rank">
+      <div class="widget">
+        <h2 class="widget__title">👑 My Rank</h2>
+        <div class="widget__value" id="studentRank">Calculating…</div>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">🧠 How do you feel today?</h2>
+        <select id="moodSelector" class="widget__select">
+          <option>😊 Happy</option>
+          <option>😐 Okay</option>
+          <option>😞 Sad</option>
+          <option>🤩 Excited</option>
+          <option>🥱 Tired</option>
+        </select>
+        <p class="widget__mood-response" id="moodResponse"></p>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">🧪 Science Fact</h2>
+        <p id="scienceFact">Loading…</p>
+      </div>
+      <div class="widget">
+        <h2 class="widget__title">🧩 Daily Challenge</h2>
+        <a href="#" class="btn">🧠 Start Mini Quiz</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- External JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
+  <script>
+    // --- Utility: Logout & Session Timeout ---
+function logout() {
+  fetch('/students/logout', { method: 'POST', credentials: 'include' })
+    .then(() => window.location.href = '/students/login');
+}
+
+// Auto-logout after 10m inactivity
+let inactivityTimer;
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    alert("You’ve been logged out due to inactivity.");
+    logout();
+  }, 10 * 60 * 1000);
+}
+window.onload = resetTimer;
+document.onmousemove = resetTimer;
+document.onkeypress = resetTimer;
+
+// --- Date & Time ---
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString();
+  document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+}
+setInterval(updateDateTime, 1000);
+
+// --- Load Profile ---
+function loadProfile() {
+  fetch('/api/student/dashboard', { credentials: 'include' })
+    .then(r => r.json())
+    .then(d => {
+      const s = d.student || {};
+      document.getElementById('studentName').textContent = s.studentName || 'Student';
+      document.getElementById('profileName').textContent = s.studentName || '--';
+      document.getElementById('profileGrade').textContent = s.studentGrade || '--';
+      document.getElementById('profileSchool').textContent = s.studentSchool || '--';
+      document.getElementById('profileDOB').textContent = s.studentDOB 
+        ? new Date(s.studentDOB).toLocaleDateString() 
+        : '--';
+      document.getElementById('starCount').textContent = s.stars || 0;
+
+      // Simulate attendance & grade
+      document.getElementById('attendancePercent').textContent = "92%";
+      document.getElementById('gradeAverage').textContent = "88%";
+
+      // XP bar
+      const stars = s.stars || 0;
+      document.getElementById('xpLevel').textContent = `Level ${Math.floor(stars/10)+1}`;
+      document.getElementById('xpBar').style.width = `${(stars%10)*10}%`;
+
+      loadRank(stars);
+    })
+    .catch(console.error);
+}
+
+// --- Rank Logic ---
+function loadRank(stars) {
+  let rank = "Rookie Learner";
+  if (stars >= 50) rank = "Brain Champion";
+  else if (stars >= 30) rank = "Super Learner";
+  else if (stars >= 10) rank = "Active Explorer";
+  document.getElementById('studentRank').textContent = rank;
+}
+
+// --- Mood Interaction ---
+const moodMessages = {
+  "😊 Happy": "That’s awesome! Keep shining today!",
+  "😐 Okay": "Let’s make today better together!",
+  "😞 Sad": "You’ve got this 💪",
+  "🤩 Excited": "Bring that energy to class!",
+  "🥱 Tired": "Try a quick stretch or water break!"
+};
+document.getElementById('moodSelector')
+  .addEventListener('change', e => {
+    document.getElementById('moodResponse')
+      .textContent = moodMessages[e.target.value];
+  });
+
+// --- Science Fact & Tip ---
+function randomItem(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function loadScienceFact() {
+  const facts = [
+    "Water can boil and freeze at the same time!",
+    "Your teeth are as hard as rocks.",
+    "Space is completely silent.",
+    "Your brain has 100 billion neurons!",
+    "Octopuses have 3 hearts!"
+  ];
+  document.getElementById('scienceFact').textContent = randomItem(facts);
+}
+function loadDailyTip() {
+  const tips = [
+    "Stay hydrated! 💧",
+    "Review one thing you learned yesterday 📚",
+    "Always ask questions 🧠",
+    "Deep breaths help before big tasks 🌬️",
+    "Practice makes perfect! 🏆"
+  ];
+  document.getElementById('dailyTip').textContent = randomItem(tips);
+}
+
+// --- Badges & Subjects ---
+function loadBadges() {
+  const badges = [
+    { name: "First Star!", earned: true },
+    { name: "Attendance Pro", earned: true },
+    { name: "Assignment Master", earned: false },
+    { name: "Calendar Champ", earned: true },
+  ];
+  document.getElementById('badgeList').innerHTML = badges.map(b =>
+    `<div class="badge">
+       ${b.earned ? '🏅' : '🔒'} ${b.name}
+     </div>`
+  ).join('');
+}
+function loadSubjects() {
+  fetch('/api/student/dashboard', { credentials: 'include' })
+    .then(r => r.json())
+    .then(d => {
+      const courses = d.student?.courses || [];
+      document.getElementById('subjectExplorer').innerHTML = courses.map(c =>
+        `<div class="subject">📘 ${c}</div>`
+      ).join('');
+    });
+}
+
+// --- Assignments & Messages ---
+function loadAssignments() {
+  fetch('/students/my-assignments', { credentials: 'include' })
+    .then(r => r.json())
+    .then(list => {
+      const html = list.length
+        ? list.slice(0, 3).map(a =>
+            `<div class="item">
+               <strong>${a.title}</strong><br>
+               📅 Due: ${new Date(a.dueDate).toLocaleDateString()}<br>
+               📘 ${a.subject}
+             </div>`
+          ).join('')
+        : "🎉 No upcoming assignments!";
+      document.getElementById('assignmentList').innerHTML = html;
+    });
+}
+function loadMessages() {
+  fetch('/api/messages/inbox', { credentials: 'include' })
+    .then(r => r.json())
+    .then(msgs => {
+      const unread = msgs.filter(m => !m.read).slice(0, 2);
+      const html = unread.length
+        ? unread.map(m =>
+            `<div class="item">
+               <strong>${m.subject}</strong><br>
+               From: ${m.senderName || m.senderEmail}<br>
+               <em>${m.body.substring(0,60)}…</em>
+             </div>`
+          ).join('')
+        : "🎉 No new messages!";
+      document.getElementById('messageList').innerHTML = html;
+    });
+}
+
+// --- FullCalendar Setup ---
+function loadCalendar() {
+  fetch('/api/student/dashboard', { credentials: 'include' })
+    .then(r => r.json())
+    .then(d => fetch(`/api/calendar/student-events/${d.student._id}`, { credentials: 'include' }))
+    .then(r => r.json())
+    .then(events => {
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: events.map(e => ({
+          title: e.title,
+          start: e.date,
+          extendedProps: { description: e.description, link: e.link }
+        })),
+        eventDidMount(info) {
+          tippy(info.el, {
+            content: `
+              <strong>${info.event.title}</strong><br>
+              ${info.event.start.toLocaleDateString()}<br>
+              ${info.event.extendedProps.description || ''}<br>
+              ${info.event.extendedProps.link 
+                ? `<a href="${info.event.extendedProps.link}" target="_blank">🔗 Join</a>` 
+                : ''}`
+          , allowHTML: true });
+        }
+      });
+      calendar.render();
+    });
+}
+
+// --- Initialize All ---
+window.addEventListener('DOMContentLoaded', () => {
+  loadProfile();
+  updateDateTime();
+  loadScienceFact();
+  loadDailyTip();
+  loadBadges();
+  loadSubjects();
+  loadAssignments();
+  loadMessages();
+  loadCalendar();
+});
+
+  </script>
+</body>
+</html>

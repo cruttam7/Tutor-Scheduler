@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Login</title>
+  <style>
+    /* 🌟 Final Beautiful Style */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      background: linear-gradient(to right, #e8f5e9, #f1f8e9);
+      display: flex; justify-content: center; align-items: center; height: 100vh;
+    }
+    .login-container {
+      background: white; border-radius: 16px; padding: 40px;
+      width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .form-box h1 { text-align: center; font-size: 28px; color: #2e7d32; margin-bottom: 30px; }
+    input[type="email"], input[type="password"] {
+      padding: 14px; font-size: 16px; width: 100%; border: 1px solid #ccc;
+      border-radius: 10px; margin: 10px 0 20px; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    input:focus { border-color: #43b46e; box-shadow: 0 0 8px rgba(67,180,110,0.4); outline: none; }
+    .password-container { position: relative; width: 100%; }
+    .password-container input { padding-right: 42px; }
+    .toggle-password {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 1.2em; color: #999; cursor: pointer;
+    }
+    .toggle-password:hover { color: #2e7d32; }
+    button[type="submit"] {
+      width: 100%; padding: 14px; background-color: #2e7d32; color: white;
+      border: none; border-radius: 10px; font-size: 17px; font-weight: 600;
+      cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button[type="submit"]:hover { background-color: #1b5e20; transform: translateY(-1px); }
+    .forgot-password { text-align: center; margin-top: 15px; }
+    .forgot-password a { color: #2e7d32; text-decoration: none; font-weight: 500; }
+    .forgot-password a:hover { text-decoration: underline; color: #1b5e20; }
+    .modal { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); z-index: 999; }
+    .modal.show { visibility: visible; opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: #fff; margin: 15% auto; padding: 30px; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.3); width: 35%; max-width: 500px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .modal-header h2 { font-size: 20px; color: #2e7d32; }
+    .modal-body { text-align: center; font-size: 16px; }
+    .close, .close-modal { font-size: 28px; font-weight: bold; color: #333; cursor: pointer; }
+    .close:hover, .close-modal:hover { color: red; }
+    .password-container input {
+  padding: 14px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 10px 0 20px;
+  padding-right: 42px;
+  height: 48px;
+}
+
+.eye-wrapper {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.toggle-password {
+  font-size: 1.2em;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+  color: #2e7d32;
+}
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    @media (max-width: 480px) {
+      .form-box { padding: 25px; }
+      .modal-content { padding: 20px; width: 95%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <div class="form-box">
+      <h1>Student Login</h1>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email" required /><br />
+        <div class="password-container">
+          <input type="password" id="loginPassword" name="password" required placeholder="Password" />
+  <div class="eye-wrapper">
+    <i class="fas fa-eye toggle-password" id="togglePassword" title="Show Password"></i>
+  </div>
+</div>
+        <button type="submit">Login</button>
+        <div class="forgot-password">
+          <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+        </div>
+      </form>
+      <div id="message"></div>
+    </div>
+  </div>
+<!-- 🟢 Everything from <html> to <body> remains the same up to this part -->
+
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Forgot Password</h2>
+      <span class="close-modal">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="forgotPasswordForm">
+        <input type="email" id="forgotEmail" placeholder="Enter your email" required><br><br>
+        <button type="submit" id="resetBtn">Send Reset Link</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Message Modal -->
+<div id="messageModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p id="messageText"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('loginForm');
+  const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+  const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+  const messageModal = document.getElementById('messageModal');
+  const messageText = document.getElementById('messageText');
+
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('loginPassword');
+
+  // Toggle Password Visibility
+  togglePassword.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    togglePassword.classList.toggle('fa-eye');
+    togglePassword.classList.toggle('fa-eye-slash');
+    togglePassword.title = isPassword ? 'Hide Password' : 'Show Password';
+  });
+
+  // Show message modal
+  function showModal(message, color) {
+    messageText.textContent = message;
+    messageText.style.color = color;
+    messageModal.style.display = 'block';
+    if (color === 'green') {
+      setTimeout(() => {
+        messageModal.style.display = 'none';
+      }, 1500);
+    }
+  }
+
+  // Close modals
+  document.querySelectorAll('.close, .close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      messageModal.style.display = 'none';
+      forgotPasswordModal.style.display = 'none';
+    });
+  });
+
+  // Login Form Submit
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+      const response = await fetch('/students/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showModal("✅ Login Successful!", "green");
+        setTimeout(() => {
+          window.location.href = '/studentDashboard.html';
+        }, 300);
+      } else {
+        showModal(result.message || "❌ Login failed.", "red");
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      showModal('❌ Server error.', 'red');
+    }
+  });
+
+  // Forgot Password Link Click
+  document.getElementById('forgotPasswordLink').addEventListener('click', () => {
+    forgotPasswordModal.style.display = 'block';
+  });
+
+  // Forgot Password Form Submit (prevents multiple emails)
+  forgotPasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const resetBtn = document.getElementById('resetBtn');
+    const email = document.getElementById('forgotEmail').value;
+
+    // Disable button to prevent resending
+    resetBtn.disabled = true;
+    resetBtn.textContent = "Sending...";
+
+    try {
+      const response = await fetch('/students/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showModal("📧 Reset link sent successfully!", "green");
+        forgotPasswordForm.reset();
+        forgotPasswordModal.style.display = 'none';
+      } else {
+        showModal(result.message || "❌ Failed to send reset link.", "red");
+      }
+    } catch (error) {
+      console.error('Forgot Password Error:', error);
+      showModal('❌ Server error.', 'red');
+    } finally {
+      // Re-enable after response
+      resetBtn.disabled = false;
+      resetBtn.textContent = "Send Reset Link";
+    }
+  });
+
+  // Close modal when clicking outside
+  window.addEventListener('click', (event) => {
+    if (event.target.classList.contains('modal')) {
+      event.target.style.display = 'none';
+    }
+  });
+});
+</script>
+
+
+
+</body>
+</html>

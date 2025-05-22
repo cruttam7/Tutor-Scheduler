@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Messaging</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef1f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .messenger-container {
+      max-width: 950px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .user-select {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .chat-thread {
+      height: 350px;
+      overflow-y: auto;
+      padding: 15px;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin: 8px 0;
+      padding: 10px 14px;
+      border-radius: 15px;
+      max-width: 80%;
+      word-wrap: break-word;
+      position: relative;
+    }
+
+    .sent {
+      background: #d1e7dd;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+      text-align: right;
+    }
+
+    .received {
+      background: #e2e3e5;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+      text-align: left;
+    }
+
+    .message small {
+      font-size: 11px;
+      color: #555;
+      display: block;
+      margin-top: 4px;
+    }
+
+    form {
+      padding: 15px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    form input, form textarea {
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      padding: 10px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    form button:hover {
+      background: #1a252f;
+    }
+
+    .attachment {
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .attachment a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .attachment a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="messenger-container">
+  <div class="header">💬 Admin Messenger</div>
+
+  <div class="user-select">
+    <label for="userSelect"><strong>Send To:</strong></label>
+    <select id="userSelect"><option value="">-- Select User --</option></select>
+  </div>
+
+  <div class="chat-thread" id="chatThread">Select a user to view messages...</div>
+
+  <form id="messageForm" enctype="multipart/form-data">
+    <input type="text" id="subject" placeholder="Subject" required>
+    <textarea id="body" placeholder="Write your message..." rows="3" required></textarea>
+    <input type="file" id="attachment">
+    <button type="submit">Send</button>
+  </form>
+</div>
+
+<script>
+  let senderEmail = "";
+  const chatBox = document.getElementById('chatThread');
+  const recipientDropdown = document.getElementById('userSelect');
+
+  async function getAdminEmail() {
+    try {
+      const res = await fetch('/api/admin/me');
+      if (!res.ok) throw new Error("Not logged in as admin");
+      const data = await res.json();
+      senderEmail = data.email;
+    } catch (err) {
+      alert("❌ You are not logged in as admin.");
+      console.error(err);
+    }
+  }
+
+  async function loadUsers() {
+    const res = await fetch('/api/admin/available-users');
+    const users = await res.json();
+
+    recipientDropdown.innerHTML = '<option value="">-- Select User --</option>';
+    users.forEach(user => {
+      const opt = document.createElement('option');
+      opt.value = user.email;
+      opt.textContent = `${user.role === 'Tutor' ? '👨‍🏫' : '👩‍🎓'} ${user.role} - ${user.name}`;
+      recipientDropdown.appendChild(opt);
+    });
+  }
+
+  async function loadThread(recipientEmail) {
+    chatBox.innerHTML = '<i>Loading messages...</i>';
+    const res = await fetch(`/api/messages/thread/${senderEmail}/${recipientEmail}`);
+    const messages = await res.json();
+
+    chatBox.innerHTML = '';
+    messages.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = 'message ' + (msg.senderEmail === senderEmail ? 'sent' : 'received');
+      div.innerHTML = `
+        <strong>${msg.subject}</strong><br>${msg.body}
+        ${msg.attachment ? `<div class="attachment"><a href="/uploads/${msg.attachment}" target="_blank">📎 ${msg.attachment}</a></div>` : ''}
+        <small>${new Date(msg.timestamp).toLocaleString()}</small>
+      `;
+      chatBox.appendChild(div);
+    });
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  recipientDropdown.addEventListener('change', (e) => {
+    const email = e.target.value;
+    if (email) loadThread(email);
+  });
+
+  document.getElementById('messageForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const recipientEmail = recipientDropdown.value;
+    if (!recipientEmail) return alert('Please select a user.');
+
+    const formData = new FormData();
+    formData.append('senderEmail', senderEmail);
+    formData.append('recipientEmail', recipientEmail);
+    formData.append('subject', document.getElementById('subject').value);
+    formData.append('body', document.getElementById('body').value);
+    if (document.getElementById('attachment').files[0]) {
+      formData.append('attachment', document.getElementById('attachment').files[0]);
+    }
+
+    const res = await fetch('/api/messages/send', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (res.ok) {
+      document.getElementById('messageForm').reset();
+      loadThread(recipientEmail);
+    } else {
+      alert('❌ Failed to send message.');
+    }
+  });
+
+  // Init
+  (async () => {
+    await getAdminEmail();
+    if (senderEmail) await loadUsers();
+  })();
+</script>
+<script>
+  // 🧠 Auto-load thread if redirected from notification
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadUsers(); // ensure dropdown is populated first
+
+    const selectedUserEmail = localStorage.getItem('selectedUserEmail');
+    if (selectedUserEmail) {
+      const checkAndLoad = setInterval(() => {
+        const select = document.getElementById('userSelect');
+        if (select && typeof loadThread === 'function') {
+          const option = [...select.options].find(opt => opt.value === selectedUserEmail);
+          if (option) {
+            select.value = selectedUserEmail;
+            loadThread(selectedUserEmail); // ✅ auto-load messages
+            localStorage.removeItem('selectedUserEmail'); // ✅ clear
+            clearInterval(checkAndLoad);
+          }
+        }
+      }, 200);
+    }
+
+    // 👂 Listen for manual dropdown changes too
+    const selectBox = document.getElementById('userSelect');
+    if (selectBox) {
+      selectBox.addEventListener('change', (e) => {
+        const email = e.target.value;
+        loadThread(email); // manual load
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

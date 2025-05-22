@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutor Registration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-color: #007BFF;
+      --primary-hover: #0069d9;
+      --error-color: #e74c3c;
+      --success-color: #28a745;
+      --border-color: #ced4da;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+      margin: 0;
+      color: #212529;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6c757d;
+      margin-bottom: 30px;
+      font-size: 1.05rem;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px var(--shadow-color);
+    }
+
+    h2 {
+      color: var(--primary-color);
+      border-left: 4px solid var(--primary-color);
+      padding-left: 12px;
+      margin: 30px 0 20px;
+      font-size: 1.3rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--error-color);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 15px;
+      background-color: #fff;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .checkbox-group {
+      margin: 15px 0;
+      padding-left: 5px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: auto;
+      margin-right: 12px;
+      accent-color: var(--primary-color);
+    }
+
+    .error-message {
+      color: var(--error-color);
+      font-size: 0.875rem;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .input-error {
+      border-color: var(--error-color);
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 14px;
+      margin-top: 25px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button:disabled {
+      background-color: #94c5f8;
+      cursor: not-allowed;
+    }
+
+    #dialogOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #dialogBox {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    #dialogBox p {
+      margin: 0 0 20px;
+      font-size: 16px;
+    }
+
+    #dialogBox button {
+      padding: 10px 20px;
+    }
+
+    .success-dialog {
+      color: var(--success-color);
+    }
+
+    .error-dialog {
+      color: var(--error-color);
+    }
+
+    @media (max-width: 768px) {
+      form { padding: 20px; }
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Register a New Tutor</h1>
+
+    <form id="tutorRegistrationForm" novalidate>
+      <h2>Personal Information</h2>
+      <div class="form-group">
+        <label for="firstName" class="required">First Name:</label>
+        <input type="text" id="firstName" required />
+        <div class="error-message" id="firstNameError">Please enter your first name</div>
+      </div>
+
+      <div class="form-group">
+        <label for="lastName" class="required">Last Name:</label>
+        <input type="text" id="lastName" required />
+        <div class="error-message" id="lastNameError">Please enter your last name</div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="required">Email:</label>
+        <input type="email" id="email" required />
+        <div class="error-message" id="emailError">Please enter a valid email</div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="required">Phone:</label>
+        <input type="tel" id="phone" required />
+        <div class="error-message" id="phoneError">Enter a valid phone</div>
+      </div>
+
+      <div class="form-group">
+        <label for="address" class="required">Address:</label>
+        <input type="text" id="address" required />
+        <div class="error-message" id="addressError">Please enter address</div>
+      </div>
+
+      <h2>Professional Information</h2>
+      <div class="form-group">
+        <label class="required">Select Courses:</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item"><input type="checkbox" value="Math" class="course" id="math"><label for="math">Mathematics</label></div>
+          <div class="checkbox-item"><input type="checkbox" value="English" class="course" id="english"><label for="english">English</label></div>
+          <div class="checkbox-item"><input type="checkbox" value="Science" class="course" id="science"><label for="science">Science</label></div>
+        </div>
+        <div class="error-message" id="coursesError">Select at least one course</div>
+      </div>
+
+      <div class="form-group">
+        <label for="qualifications" class="required">Qualifications:</label>
+        <textarea id="qualifications" required></textarea>
+        <div class="error-message" id="qualificationsError">Please enter qualifications</div>
+      </div>
+
+      <div class="form-group">
+        <label for="experience" class="required">Experience:</label>
+        <input type="number" id="experience" required min="0" max="50" />
+        <div class="error-message" id="experienceError">Enter valid years (0-50)</div>
+      </div>
+
+      <div class="form-group">
+        <label for="bio" class="required">Bio:</label>
+        <textarea id="bio" required minlength="50"></textarea>
+        <div class="error-message" id="bioError">Minimum 50 characters</div>
+      </div>
+
+      <div class="form-group">
+        <label for="rate" class="required">Hourly Rate (USD):</label>
+        <input type="number" id="rate" required min="5" />
+        <div class="error-message" id="rateError">Minimum $5</div>
+      </div>
+
+      <div class="form-group">
+        <label for="username" class="required">Username:</label>
+        <input type="text" id="username" required minlength="4" />
+        <div class="error-message" id="usernameError">At least 4 characters</div>
+      </div>
+
+      <button type="submit" id="submitBtn">Register Tutor</button>
+    </form>
+  </div>
+
+  <div id="dialogOverlay">
+    <div id="dialogBox">
+      <p id="dialogMessage"></p>
+      <button id="dialogCloseBtn">OK</button>
+    </div>
+  </div>
+
+<script>
+  function closeDialog() {
+    document.getElementById('dialogOverlay').style.display = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('tutorRegistrationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const dialogOverlay = document.getElementById('dialogOverlay');
+    const dialogMessage = document.getElementById('dialogMessage');
+    const dialogBox = document.getElementById('dialogBox');
+    const courseCheckboxes = document.querySelectorAll('.course');
+
+    const fields = [
+      { id: 'firstName', errorId: 'firstNameError', validate: (v) => !!v.trim() },
+      { id: 'lastName', errorId: 'lastNameError', validate: (v) => !!v.trim() },
+      { id: 'email', errorId: 'emailError', validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+      { id: 'phone', errorId: 'phoneError', validate: (v) => /^[0-9\-+\s()]{10,}$/.test(v) },
+      { id: 'address', errorId: 'addressError', validate: (v) => !!v.trim() },
+      { id: 'qualifications', errorId: 'qualificationsError', validate: (v) => !!v.trim() },
+      { id: 'experience', errorId: 'experienceError', validate: (v) => v >= 0 && v <= 50 },
+      { id: 'bio', errorId: 'bioError', validate: (v) => v.length >= 50 },
+      { id: 'rate', errorId: 'rateError', validate: (v) => v >= 5 },
+      { id: 'username', errorId: 'usernameError', validate: (v) => v.length >= 4 },
+    ];
+
+    fields.forEach(f => {
+      const input = document.getElementById(f.id);
+      const error = document.getElementById(f.errorId);
+      input.addEventListener('input', () => validateField(input, error, f.validate));
+    });
+
+    function validateField(input, error, validateFn) {
+      const valid = validateFn(input.value);
+      error.style.display = valid ? 'none' : 'block';
+      input.classList.toggle('input-error', !valid);
+      return valid;
+    }
+
+    function validateCourseSelection() {
+      const error = document.getElementById('coursesError');
+      const isChecked = Array.from(courseCheckboxes).some(cb => cb.checked);
+      error.style.display = isChecked ? 'none' : 'block';
+      return isChecked;
+    }
+
+    function showDialog(message, isSuccess = true) {
+      dialogMessage.textContent = message;
+      dialogBox.className = isSuccess ? 'success-dialog' : 'error-dialog';
+      dialogOverlay.style.display = 'flex';
+    }
+
+    document.getElementById('dialogCloseBtn').addEventListener('click', closeDialog);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing...';
+
+      const isValid = fields.every(f => validateField(
+        document.getElementById(f.id),
+        document.getElementById(f.errorId),
+        f.validate
+      )) && validateCourseSelection();
+
+      if (!isValid) {
+        showDialog("Please correct the errors in the form.", false);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register Tutor';
+        return;
+      }
+
+      const selectedCourses = Array.from(courseCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+      const data = {
+        firstName: form.firstName.value.trim(),
+        lastName: form.lastName.value.trim(),
+        email: form.email.value.trim(),
+        phone: form.phone.value.trim(),
+        address: form.address.value.trim(),
+        subjects: selectedCourses,
+        qualifications: form.qualifications.value.trim(),
+        experience: parseInt(form.experience.value),
+        bio: form.bio.value.trim(),
+        rate: parseFloat(form.rate.value),
+        username: form.username.value.trim(),
+        submittedAt: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch('https://nlf83kc2-3000.aue.devtunnels.ms/admin/register-tutor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // ✅ required for session
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        showDialog(result.message || "Registered successfully!", response.ok);
+        if (response.ok) form.reset();
+
+      } catch (err) {
+        showDialog("Network error. Please try again.", false);
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Register Tutor';
+    });
+  });
+</script>
+
+</body>
+</html>

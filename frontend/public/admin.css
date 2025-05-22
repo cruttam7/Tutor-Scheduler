@@ -1,0 +1,279 @@
+/* Global Reset */ 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #43b46e, #88d3ce);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+/* Container for the Form */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%; /* Full width for better responsiveness */
+}
+
+/* Form Box */
+.form-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 450px; /* Ensure a consistent width on larger screens */
+}
+
+/* Form Heading */
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* Input Fields Styling */
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Input Focus State */
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: #43b46e;
+    box-shadow: 0 0 6px rgba(67, 180, 110, 0.5);
+}
+
+/* Button Styling */
+button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background-color: #386331;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 20px;
+}
+
+/* Button Hover and Focus */
+button[type="submit"]:hover,
+button[type="submit"]:focus {
+    background-color: #88d3ce;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark background with transparency */
+}
+
+/* Centering for Forgot Password Modal */
+#forgotPasswordModal .modal-content {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    width: 35%;
+    max-width: 500px;
+    background-color: #fff;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Center Modal Content */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    width: 35%;
+    max-width: 500px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    color: #333;
+}
+
+/* Enlarged Close Button */
+.close, .close-forgot {
+    font-size: 30px; /* Increased size for better visibility */
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover, .close:focus,
+.close-forgot:hover, .close-forgot:focus {
+    color: red;
+    text-decoration: none;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 20px 0;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+}
+
+#closeBtn {
+    padding: 10px 20px;
+    background-color: #43b46e;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#closeBtn:hover {
+    background-color: #388e3c;
+}
+
+/* Animation for Modal */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Center Forgot Password Link */
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot-password a {
+    color: #00695c;
+    font-weight: bold;
+}
+
+.forgot-password a:hover {
+    color: #004d40;
+}
+
+/* Message text styling */
+#messageText {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Button styling for modal submit */
+button {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1b5e20;
+}
+
+/*new one for the hide and show password/* Password container for stable layout *//* Password container for stable layout */
+/* Password container for stable layout */
+.password-container {
+    position: relative;
+    width: 100%;
+    height: 50px;  /* Fixed height to prevent resizing */
+}
+
+/* Style for the password input field */
+.password-container input[type="password"],
+.password-container input[type="text"] {
+    width: 100%;  /* Make the input field take full width */
+    height: 100%;  /* Ensure the input field fills the container's height */
+    padding-right: 40px;  /* Space for the eye icon */
+    box-sizing: border-box;  /* Include padding and borders in the total size */
+    font-size: 16px;  /* Adjust font size */
+    border: 1px solid #ccc;  /* Border style */
+    border-radius: 8px;  /* Rounded corners */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;  /* Add smooth transitions */
+}
+
+/* Eye icon style */
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px;  /* Position the icon to the right */
+    top: 50%;  /* Vertically center the icon */
+    transform: translateY(-50%);  /* Fix vertical centering */
+    cursor: pointer;
+    color: #888;  /* Icon color */
+    font-size: 1.2em;  /* Adjust the size */
+    z-index: 2;  /* Make sure the icon stays on top */
+}
+
+/* Hover effect for the eye icon */
+.password-container .toggle-password:hover {
+    color: #000;
+}
+
+/* Input focus effect */
+.password-container input:focus {
+    border-color: #43b46e;
+    box-shadow: 0 0 6px rgba(67, 180, 110, 0.5);
+}

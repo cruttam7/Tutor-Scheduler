@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📘 Tutor Attendance Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background-color: #f0f2f5;
+      color: #2c3e50;
+    }
+
+    .header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .header span {
+      font-size: 16px;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 30px auto;
+      background-color: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 6px;
+    }
+
+    .form-group, .filters {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    input[type="week"], input[type="text"], select {
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .btn-submit, .filters button {
+      padding: 12px 20px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: #2ecc71;
+      color: white;
+      margin-top: 20px;
+    }
+
+    .btn-submit:hover {
+      background-color: #27ae60;
+    }
+
+    .filters button {
+      background-color: #2980b9;
+      color: white;
+    }
+
+    .filters button:hover {
+      background-color: #1c6ea4;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-weight: 500;
+      padding: 10px 15px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📘 Tutor Attendance Dashboard</h1>
+  <span id="tutorWelcome">👋 Loading...</span>
+</div>
+
+<div class="container">
+  <div class="section-title">📅 Weekly Attendance Submission</div>
+
+  <div class="form-group">
+    <label for="weekInput">Select Week:</label>
+    <input type="week" id="weekInput" required />
+  </div>
+
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Search by Student Name">
+    <select id="subjectFilter">
+      <option value="">All Subjects</option>
+      <option value="Math">Math</option>
+      <option value="Science">Science</option>
+      <option value="English">English</option>
+    </select>
+    <button onclick="downloadSummary()">⬇️ Export Summary to Excel</button>
+  </div>
+
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+        <th>Student</th>
+        <th>Course</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="attendanceBody"></tbody>
+  </table>
+
+  <button class="btn-submit" onclick="submitAttendance()">✅ Submit Attendance</button>
+  <div id="feedback" class="message"></div>
+</div>
+
+<script>
+  let allRows = [];
+  const attendanceRecords = {}; // { 'Name|Course': [ 'Present', 'Absent', ... ] }
+
+  async function loadTutorInfo() {
+    try {
+      const res = await fetch('/api/tutor/me', { credentials: 'include' });
+      const data = await res.json();
+      document.getElementById('tutorWelcome').textContent = `👋 Welcome, ${data.firstName || data.username || data.email}`;
+    } catch {
+      document.getElementById('tutorWelcome').textContent = '👋 Welcome';
+    }
+  }
+
+  async function loadStudents() {
+    const res = await fetch('/api/students/detailed', { credentials: 'include' });
+    const students = await res.json();
+    allRows = [];
+
+    students.forEach(s => {
+      (s.courses || []).forEach(c => allRows.push({ name: s.studentName, course: c }));
+    });
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const subject = document.getElementById('subjectFilter').value;
+    const tbody = document.getElementById('attendanceBody');
+    tbody.innerHTML = '';
+
+    allRows
+      .filter(r => r.name.toLowerCase().includes(search) && (!subject || r.course === subject))
+      .forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox" class="rowCheckbox" data-key="${row.name}|${row.course}"></td>
+          <td>${row.name}</td>
+          <td>${row.course}</td>
+          <td>
+            <select>
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+  }
+
+  function toggleAll(src) {
+    document.querySelectorAll('.rowCheckbox').forEach(cb => cb.checked = src.checked);
+  }
+
+  async function submitAttendance() {
+    const week = document.getElementById('weekInput').value;
+    const rows = document.querySelectorAll('#attendanceTable tbody tr');
+    const records = [];
+
+    if (!week) return showMessage('❗ Please select a week before submitting.', 'error');
+
+    rows.forEach(row => {
+      const name = row.children[1].textContent;
+      const course = row.children[2].textContent;
+      const status = row.children[3].querySelector('select').value;
+      const key = `${name}|${course}`;
+
+      records.push({ studentName: name, course, status, week });
+
+      if (!attendanceRecords[key]) attendanceRecords[key] = [];
+      attendanceRecords[key].push(status);
+    });
+
+    try {
+      const res = await fetch('/api/attendance/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ week, records })
+      });
+
+      const result = await res.json();
+      showMessage(result.message || '✅ Attendance submitted!', 'success');
+
+      setTimeout(() => {
+        renderTable();
+        document.getElementById('selectAll').checked = false;
+      }, 500);
+    } catch {
+      showMessage('❌ Failed to submit.', 'error');
+    }
+  }
+
+  function showMessage(message, type) {
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = message;
+    feedback.className = `message ${type}`;
+  }
+
+  function downloadSummary() {
+    const selected = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.dataset.key);
+    if (!selected.length) return showMessage("❗ Please select at least one row", 'error');
+
+    const data = selected.map(key => {
+      const [name, course] = key.split('|');
+      const history = attendanceRecords[key] || [];
+      const present = history.filter(s => s === 'Present').length;
+      const absent = history.filter(s => s === 'Absent').length;
+      const total = history.length;
+      const percent = total ? Math.round((present / total) * 100) + '%' : 'N/A';
+
+      return {
+        Student: name,
+        Course: course,
+        'Total Weeks': total,
+        Present: present,
+        Absent: absent,
+        'Attendance %': percent
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance Summary");
+    XLSX.writeFile(wb, "Attendance_Summary.xlsx");
+    showMessage('✅ Excel file generated successfully.', 'success');
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('subjectFilter').addEventListener('change', renderTable);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTutorInfo();
+    loadStudents();
+  });
+</script>
+</body>
+</html>

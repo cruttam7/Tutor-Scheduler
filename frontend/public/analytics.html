@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>System Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f4f6f9;
+      padding: 30px;
+      color: #2c3e50;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .filter-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .filter-section input {
+      padding: 10px;
+      font-size: 14px;
+      margin: 0 10px;
+    }
+
+    .filter-section button {
+      padding: 10px 20px;
+      font-size: 14px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .stat-box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      min-width: 200px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .charts {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    canvas {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 System Analytics Dashboard</h1>
+
+  <!-- Filter -->
+  <div class="filter-section">
+    <label>From: <input type="date" id="fromDate"></label>
+    <label>To: <input type="date" id="toDate"></label>
+    <button onclick="fetchAnalytics()">Filter</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-box" id="activeUsers">Active Users: --</div>
+    <div class="stat-box" id="totalSessions">Total Sessions: --</div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+    <canvas id="loginChart" height="300"></canvas>
+    <canvas id="sessionChart" height="300"></canvas>
+  </div>
+
+  <!-- JS -->
+  <script>
+    let loginChartInstance = null;
+    let sessionChartInstance = null;
+
+    async function fetchAnalytics() {
+      const from = document.getElementById('fromDate').value;
+      const to = document.getElementById('toDate').value;
+
+      try {
+        const res = await fetch(`/admin/analytics?from=${from}&to=${to}`);
+        const data = await res.json();
+
+        document.getElementById('activeUsers').textContent = `Active Users: ${data.activeUsers}`;
+        const totalSessionCount = data.sessions.reduce((sum, s) => sum + s.count, 0);
+        document.getElementById('totalSessions').textContent = `Total Sessions: ${totalSessionCount}`;
+
+        drawChart('loginChart', 'Login Trends', data.logins, 'loginChartInstance');
+        drawChart('sessionChart', 'Session Counts', data.sessions, 'sessionChartInstance');
+      } catch (err) {
+        console.error('Analytics fetch failed:', err);
+        alert('Failed to load analytics data.');
+      }
+    }
+
+    function drawChart(canvasId, label, dataset, instanceVarName) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+
+      // Destroy old chart
+      if (window[instanceVarName]) {
+        window[instanceVarName].destroy();
+      }
+
+      // Create new chart
+      window[instanceVarName] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dataset.map(item => item._id),
+          datasets: [{
+            label: label,
+            data: dataset.map(item => item.count),
+            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+            borderColor: '#3498db',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: label + ' (Over Time)',
+              font: { size: 18 }
+            },
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Auto load last 7 days
+    window.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      const past = new Date();
+      past.setDate(today.getDate() - 7);
+
+      document.getElementById('toDate').value = today.toISOString().split('T')[0];
+      document.getElementById('fromDate').value = past.toISOString().split('T')[0];
+
+      fetchAnalytics();
+    });
+  </script>
+</body>
+</html>

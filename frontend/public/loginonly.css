@@ -1,0 +1,121 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #43b46e, #88d3ce);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Container for the Form */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 40%;
+}
+
+/* Form Box */
+.form-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 400px; /* Prevent the form from being too wide */
+    width: 70%;
+}
+
+/* Form Heading */
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 24px; /* Adjusted for a better look */
+}
+
+/* Input Fields Styling */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Input Focus State */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: #43b46e;
+    box-shadow: 0 0 5px rgba(67, 180, 110, 0.5);
+}
+
+/* Button Styling */
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #386331;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 20px; /* Added space above the button */
+}
+
+/* Button Hover and Focus */
+button[type="submit"]:hover,
+button[type="submit"]:focus {
+    background-color: #88d3ce;
+    transform: scale(1.05); /* Slightly enlarge the button on hover */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Error Message Styling (Optional) */
+.error-message {
+    color: #ff4d4d;
+    font-size: 14px;
+    margin-top: 10px;
+} /* Ensure the password container maintains its layout */
+.password-container {
+    position: relative;
+    width: 100%;
+    height: 50px;  /* Fixed height to prevent resizing */
+}
+
+.password-container input[type="password"],
+.password-container input[type="text"] {
+    width: 100%;
+    height: 100%;
+    padding-right: 40px;  /* Space for the eye icon */
+    box-sizing: border-box;
+}
+
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    font-size: 1.2em;
+}
+
+.password-container .toggle-password:hover {
+    color: #000;
+}

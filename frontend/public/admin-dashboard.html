@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Global Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        /* Navigation Bar Styling */
+        .navbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #2c3e50;
+  color: white;
+  padding: 27px 20px;
+}
+
+
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar .logo i {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #2ecc71;
+        }
+
+        .navbar .logo span {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .navbar .menu-toggle {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        .navbar .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar .navbar-right, .navbar .navbar-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar .icon-btn {
+        background-color: transparent;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        margin: 0 10px;
+    }
+
+    .navbar .user {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .navbar .user i {
+        margin-right: 8px;
+    }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: #34495e;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin: 20px 0;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar ul li a i {
+            margin-right: 10px;
+        }
+
+        .sidebar ul li a.active {
+    background-color: #2ecc71;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+}
+/* notifiaction counter */
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  display: none; /* hidden by default */
+}
+.notif-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  width: 300px;
+  background: white;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  z-index: 9999;
+  font-size: 14px;
+}
+
+.notif-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.notif-dropdown li {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.notif-dropdown li:hover {
+  background-color: #f1f1f1;
+}
+
+.notif-dropdown li:last-child {
+  border-bottom: none;
+}
+
+        /* Close Button Styling */
+        .close-btn {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* Open Sidebar Button Styling */
+        .open-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .open-btn:hover {
+            background-color: #2c3e50;
+        }
+
+        /* Logout Button in Sidebar */
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            text-align: center;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Main Container for Content */
+        .container {
+            margin-left: 270px;
+            padding: 40px;
+            flex: 1;
+            overflow-y: auto;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .container.expanded {
+            margin-left: 20px;
+        }
+
+        .admin-info h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* Stats Section Styling */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            font-size: 18px;
+            font-weight: 500;
+            background-color: #f1f2f6;
+            padding: 20px;
+            border-radius: 10px;
+            width: 45%;
+            color: #34495e;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Admin Actions Section */
+        .admin-actions {
+  margin-bottom: 50px;
+  padding: 0 20px;
+}
+
+.admin-actions h2 {
+  font-size: 1.6rem;
+  margin-bottom: 25px;
+  color: #111827; /* Tailwind's gray-900 */
+  font-weight: 700;
+}   
+/* 🧱 Grid Layout Container */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+/* ✅ Shared Card Styling (Admin + Registration Cards) */
+.action-card,
+.registration-card {
+  background-color: #ffffff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.action-card:hover,
+.registration-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+/* 🧑‍💻 Card Titles */
+.action-card h3,
+.registration-card h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: green; /* Tailwind's gray-800 */
+  margin-bottom: 10px;
+}
+/* 📝 Descriptions */
+.action-card p,
+.registration-card p {
+  font-size: 0.95rem;
+  color: #6b7280; /* Tailwind's gray-500 */
+  margin-bottom: 10px;
+}
+
+/* 📩 Email wrapping for Registrations */
+.registration-card p {
+  word-break: break-word;
+}
+
+/* 🏷️ Role label */
+.role-label {
+  font-size: 0.85rem;
+  color: #4b5563; /* Tailwind's gray-600 */
+  font-weight: 500;
+}
+
+/* 🔗 Button Styling */
+.btn-action {
+  margin-top: auto;
+  padding: 8px 16px;
+  background-color: #3b82f6; /* Tailwind's blue-500 */
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-action:hover {
+  background-color: #2563eb; /* Tailwind's blue-600 */
+}
+/* 📦 Admin Actions Section Styling */
+.admin-actions {
+  margin-bottom: 50px;
+  padding: 0 20px;
+}
+
+.admin-actions h2 {
+  font-size: 1.6rem;
+  margin-bottom: 25px;
+  color: #111827;
+  font-weight: 700;
+}
+      
+.chart-row {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Wrap on small screens */
+  margin-bottom: 40px;
+}
+.chart-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+  margin-top: 40px;
+  flex-wrap: nowrap; /* ❗ Force side-by-side on desktop */
+}
+
+.chart-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  flex: 1;
+  min-width: 320px;
+  max-width: 600px;
+}
+
+.chart-box.pie canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.chart-box.line canvas {
+  width: 100% !important;
+  height: 240px !important;
+}
+
+
+.chart-box {
+  flex: 1;
+  min-width: 100px; /* ⬅️ was 320px */
+  max-width: 700px; /* ⬅️ was 600px */
+}
+
+
+
+
+
+
+
+
+
+/* Modal styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal-content {
+  background: white;
+  margin: 5% auto;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+}
+.close-btn {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+}
+.message-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fdfdfd;
+  padding: 10px;
+}
+.message-item {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: background 0.3s ease;
+}
+.message-item:hover {
+  background: #eef4ff;
+}
+.message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.message-form input,
+.message-form textarea {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+.message-form button {
+  padding: 12px;
+  background-color: #007BFF;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.message-form button:hover {
+  background-color: #0056b3;
+}
+.status-msg {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+
+        /* Responsive layout */
+        @media (max-width: 768px) {
+            .container {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .stat-box {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+
+            /* addded messaging system */
+            .navbar-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+
+
+
+}
+    </style>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+<!-- 🌐 NAVIGATION BAR -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <!-- 📥 Inbox Button -->
+    <button class="icon-btn" id="openMessageBtn" title="Inbox">
+      <i class="fas fa-envelope"></i>
+    </button>
+
+    <!-- 🔔 Notification Button with Dropdown -->
+    <div style="position: relative;">
+      <button class="icon-btn" id="notificationBtn" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span id="notifCountBadge" class="badge">0</span>
+      </button>
+
+      <!-- 🔔 Notification Dropdown -->
+      <div id="notifDropdown" class="notif-dropdown" style="display: none;">
+        <ul id="notifList"></ul>
+      </div>
+    </div>
+
+
+    <!-- 👤 User Info -->
+    <div class="user">
+      <i class="fas fa-user-circle"></i>
+      <span>Uttam</span>
+    </div>
+  </div>
+</nav>
+
+  
+
+    <!-- Open Sidebar Button -->
+    <button class="open-btn" id="openBtn" onclick="toggleSidebar()" style="display: none;">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <button class="close-btn" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+        <h2>Dashboard</h2>
+        <ul>
+            <li><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="#"><i class="fas fa-chart-bar"></i> Charts</a></li>
+            <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+        </ul>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="container" id="mainContainer">
+        <!-- Admin Information -->
+        <div id="adminInfo" class="admin-info">
+            <h1>Welcome, Admin</h1>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats">
+            <div id="totalTutors" class="stat-box">Total Tutors: Loading...</div>
+            <div id="totalStudents" class="stat-box">Total Students: Loading...</div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+
+        <div class="chart-section">
+          <!-- Pie Chart -->
+          <div class="chart-box">
+            <h2>Course Distribution</h2>
+            <canvas id="courseChart"></canvas>
+          </div>
+        
+          <!-- Line Chart -->
+          <div class="chart-box">
+            <h2>Account Creation Trend</h2>
+            <canvas id="accountTrendChart"></canvas>
+          </div>
+        </div>
+        
+
+
+
+
+    <!-- 🔹 Recent Registrations Section -->
+<section class="admin-actions">
+  <h2>Recent Registrations</h2>
+  <div id="recentRegistrations" class="actions-grid">
+    </div>
+</section>
+
+<!-- 🔹 Admin Actions Section -->
+<section class="admin-actions">
+  <h2>Admin Actions</h2>
+  <div class="actions-grid">
+
+    <div class="action-card">
+      <i class="fas fa-users action-icon"></i>
+      <h3>Manage Users</h3>
+      <p>View, edit, or remove users from the system.</p>
+      <a href="/admin/manage-user.html" class="btn-action">Go to Users</a>
+    </div>
+
+
+
+    <div class="action-card">
+      <i class="fas fa-user-plus action-icon"></i>
+      <h3>Create Tutor</h3>
+      <p>Create new tutor account.</p>
+      <a href="register.html" class="btn-action">Create</a>
+    </div>
+
+    <div class="action-card">
+      <i class="fas fa-edit action-icon"></i>
+      <h3>Messenger</h3>
+      <p>Chat with tutors in real-time.</p>
+      <a href="admin-messages.html" class="btn-action">Open Messages</a>
+    </div>
+
+    <div class="action-card">
+      <i class="fas fa-chart-line action-icon"></i>
+      <h3>View Analytics</h3>
+      <p>Track system usage with real-time analytics.</p>
+      <a href="analytics.html" class="btn-action">View Analytics</a>
+    </div>
+
+  </div>
+</section>
+<script>
+  const currentUserEmail = "uttam.dhakal777@gmail.com"; // ✅ Hardcoded for now
+
+  // Handle logout
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    const logoutResponse = await fetch('/logout', { method: 'POST' });
+    if (logoutResponse.ok) {
+      window.location.href = '/index.html';
+    }
+  });
+
+  // Function to hide button on scroll
+  window.addEventListener('scroll', function () {
+    var openBtn = document.getElementById('openBtn');
+    openBtn.style.display = window.scrollY > 0 ? 'none' : 'block';
+  });
+
+  // Toggle sidebar
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContainer = document.getElementById('mainContainer');
+    const openBtn = document.getElementById('openBtn');
+
+    sidebar.classList.toggle('closed');
+    mainContainer.classList.toggle('expanded');
+    openBtn.style.display = sidebar.classList.contains('closed') ? 'block' : 'none';
+  }
+
+  // Fetch admin info
+  async function fetchAdminInfo() {
+    try {
+      const response = await fetch('/admin/info');
+      const adminInfo = await response.json();
+      document.getElementById('adminInfo').innerHTML = `<h1>Hi, ${adminInfo.username}!</h1>`;
+    } catch (error) {
+      document.getElementById('adminInfo').textContent = 'Error fetching admin info.';
+    }
+  }
+
+  // Fetch stats and update UI
+  async function fetchStats() {
+    try {
+      const response = await fetch('/admin/stats', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch stats:', response.status);
+        return;
+      }
+
+      const stats = await response.json();
+      document.getElementById('totalTutors').textContent = `Total Tutors: ${stats.totalTutors}`;
+      document.getElementById('totalStudents').textContent = `Total Students: ${stats.totalStudents}`;
+
+      const container = document.getElementById('recentRegistrations');
+      container.innerHTML = '';
+      stats.recentRegistrations.forEach(person => {
+        const card = document.createElement('div');
+        card.classList.add('action-card');
+        card.innerHTML = `
+          <i class="fas fa-user action-icon"></i>
+          <h3>${person.username || person.studentName || 'N/A'}</h3>
+          <p>${person.email || 'No email'}</p>
+          <span style="color: #888;">${person.role ? person.role.toUpperCase() : 'UNKNOWN'}</span>
+        `;
+        container.appendChild(card);
+      });
+
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }
+
+  // Load pie chart for course distribution
+  async function loadCourseDistribution() {
+    try {
+      const response = await fetch('/course-distribution', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+
+      const ctx = document.getElementById('courseChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: ['#2ecc71', '#3498db', '#e67e22', '#9b59b6', '#f1c40f']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Percentage of Students by Course' }
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error loading course distribution:', error);
+    }
+  }
+
+  // Load line chart for account creation trend
+  async function loadAccountTrendChart() {
+    try {
+      const res = await fetch('/admin/account-trend');
+      const data = await res.json();
+
+      const dates = Object.keys(data).sort();
+      const studentCounts = dates.map(date => data[date].students);
+      const tutorCounts = dates.map(date => data[date].tutors);
+
+      const ctx = document.getElementById('accountTrendChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Students',
+              data: studentCounts,
+              borderColor: '#3498db',
+              backgroundColor: '#3498db33',
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: 'Tutors',
+              data: tutorCounts,
+              borderColor: '#2ecc71',
+              backgroundColor: '#2ecc7133',
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Account Creation Trend Over Time' }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+
+    } catch (err) {
+      console.error('📉 Error loading account trend:', err);
+    }
+  }
+
+  // 🔔 Notification Badge Logic
+  let lastUnreadCount = 0;
+
+  async function updateNotificationBadge() {
+    try {
+      const res = await fetch(`/api/messages/inbox/${currentUserEmail}`);
+      const messages = await res.json();
+
+      const badge = document.getElementById('notifCountBadge');
+      const unreadCount = messages.filter(m => !m.read).length;
+
+      if (unreadCount > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+
+        if (unreadCount > lastUnreadCount) {
+          const bellIcon = document.querySelector('#notificationBtn i');
+          bellIcon.style.color = '#f39c12';
+          bellIcon.classList.add('fa-shake');
+          setTimeout(() => {
+            bellIcon.style.color = 'white';
+            bellIcon.classList.remove('fa-shake');
+          }, 1500);
+        }
+
+        lastUnreadCount = unreadCount;
+      } else {
+        badge.style.display = 'none';
+        lastUnreadCount = 0;
+      }
+    } catch (err) {
+      console.error('🔔 Error fetching notification count:', err);
+    }
+  }
+
+  // 🚀 Init
+  document.addEventListener('DOMContentLoaded', () => {
+  fetchAdminInfo();
+  fetchStats();
+  loadCourseDistribution();
+  loadAccountTrendChart();
+  updateNotificationBadge();
+  loadUnreadMessagesPreview(); // 👈 add this
+
+  setInterval(() => {
+    updateNotificationBadge();
+    loadUnreadMessagesPreview(); // 👈 refresh dropdown
+  }, 20000);
+});
+
+</script>
+
+<script>
+// Toggle dropdown on bell click
+document.getElementById('notificationBtn').addEventListener('click', (e) => {
+  e.stopPropagation(); // ✅ Prevent bubbling
+  const dropdown = document.getElementById('notifDropdown');
+  dropdown.style.display = (dropdown.style.display === 'none' || dropdown.style.display === '') ? 'block' : 'none';
+});
+
+// ✅ Hide dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('notifDropdown');
+  const bellButton = document.getElementById('notificationBtn');
+
+  // Close only if clicking outside bell + dropdown
+  if (!dropdown.contains(e.target) && !bellButton.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+</script>
+<script>
+async function loadUnreadMessagesPreview() {
+  try {
+    const res = await fetch(`/api/messages/inbox/${currentUserEmail}`);
+    const messages = await res.json();
+
+    const unread = messages.filter(m => !m.read).slice(0, 5);
+    const badge = document.getElementById('notifCountBadge');
+    const list = document.getElementById('notifList');
+
+    // ⏳ Show loading
+    list.innerHTML = '<li style="padding:10px;">Loading...</li>';
+
+    // 🔔 Update badge
+    if (unread.length > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = unread.length > 9 ? '9+' : unread.length;
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // 🧹 Clear old list
+    list.innerHTML = '';
+
+    // 🟨 No unread
+    if (unread.length === 0) {
+      list.innerHTML = '<li style="padding:10px;">No new messages</li>';
+      return;
+    }
+
+    // 🔁 Render each unread message
+    unread.forEach(msg => {
+      const senderName = msg.senderName || msg.senderEmail.split('@')[0] || 'Unknown Sender';
+      const senderEmail = msg.senderEmail;
+      const preview = msg.body ? msg.body.slice(0, 30) + (msg.body.length > 30 ? '...' : '') : '';
+      const timeAgo = timeSince(new Date(msg.timestamp));
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <strong>${senderName}</strong><br>
+        <small>${preview}</small><br>
+        <span style="font-size: 11px; color: gray;">${timeAgo}</span>
+      `;
+      li.style.cursor = 'pointer';
+      li.style.padding = '10px 15px';
+      li.style.borderBottom = '1px solid #eee';
+
+      // ✅ On click → mark as read + redirect with sender stored
+      li.onclick = async () => {
+        await fetch(`/api/messages/mark-read/${senderEmail}`, { method: 'PUT' });
+        updateNotificationBadge();
+        loadUnreadMessagesPreview();
+
+        // ⬇️ Store in localStorage and redirect to open the chat thread
+        localStorage.setItem('selectedUserEmail', senderEmail);
+        window.location.href = 'admin-messages.html';
+      };
+
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to load messages:', err);
+    document.getElementById('notifList').innerHTML =
+      '<li style="padding:10px; color:red;">Error loading messages</li>';
+  }
+}
+
+// 🕒 Time formatter
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  const intervals = [
+    { label: "year", secs: 31536000 },
+    { label: "month", secs: 2592000 },
+    { label: "day", secs: 86400 },
+    { label: "hour", secs: 3600 },
+    { label: "minute", secs: 60 },
+    { label: "second", secs: 1 }
+  ];
+
+  for (const { label, secs } of intervals) {
+    const interval = Math.floor(seconds / secs);
+    if (interval >= 1) {
+      return `${interval} ${label}${interval > 1 ? "s" : ""} ago`;
+    }
+  }
+  return "just now";
+}
+
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Load thread if redirected from notification
+    const selectedUserEmail = localStorage.getItem('selectedUserEmail');
+    if (selectedUserEmail) {
+      const checkAndLoad = setInterval(() => {
+        const select = document.getElementById('userSelect');
+        if (select) {
+          const option = [...select.options].find(opt => opt.value === selectedUserEmail);
+          if (option) {
+            select.value = selectedUserEmail;
+            loadThread(selectedUserEmail); // make sure this function exists in admin-messages.html
+            localStorage.removeItem('selectedUserEmail');
+            clearInterval(checkAndLoad);
+          }
+        }
+      }, 200);
+    }
+  });
+</script>
+
+
+
+<script>
+// 🔄 Load tutors and students into the userSelect dropdown
+async function loadUsers() {
+  const select = document.getElementById('userSelect');
+  select.innerHTML = `<option disabled selected value="">-- Select a user --</option>`;
+
+  try {
+    const [tutorsRes, studentsRes] = await Promise.all([
+      fetch('/tutors/list'),
+      fetch('/api/students/min')
+    ]);
+
+    const tutors = await tutorsRes.json();
+    const students = await studentsRes.json();
+
+    // 👨‍🏫 Tutors Group
+    const tutorOptGroup = document.createElement('optgroup');
+    tutorOptGroup.label = 'Tutors';
+    tutors.forEach(tutor => {
+      const option = document.createElement('option');
+      option.value = tutor.email;
+      option.textContent = `${tutor.username} (Tutor)`;
+      tutorOptGroup.appendChild(option);
+    });
+
+    // 👩‍🎓 Students Group
+    const studentOptGroup = document.createElement('optgroup');
+    studentOptGroup.label = 'Students';
+    students.forEach(student => {
+      const option = document.createElement('option');
+      option.value = student.email; // make sure student.email is used in messaging
+      option.textContent = `${student.studentName} (Student)`;
+      studentOptGroup.appendChild(option);
+    });
+
+    select.appendChild(tutorOptGroup);
+    select.appendChild(studentOptGroup);
+
+  } catch (err) {
+    console.error('❌ Failed to load users for dropdown:', err);
+  }
+}
+
+// 🧠 Auto-load message thread if redirected from dashboard notification
+document.addEventListener('DOMContentLoaded', () => {
+  loadUsers(); // populate user dropdown first
+
+  const selectedUserEmail = localStorage.getItem('selectedUserEmail');
+  if (selectedUserEmail) {
+    const checkAndLoad = setInterval(() => {
+      const select = document.getElementById('userSelect');
+      if (select && typeof loadThread === 'function') {
+        const option = [...select.options].find(opt => opt.value === selectedUserEmail);
+        if (option) {
+          select.value = selectedUserEmail;
+          loadThread(selectedUserEmail); // ✅ make sure this function exists
+          localStorage.removeItem('selectedUserEmail');
+          clearInterval(checkAndLoad);
+        }
+      }
+    }, 200);
+  }
+
+  // 🧩 Manual selection triggers thread loading
+  const selectBox = document.getElementById('userSelect');
+  if (selectBox) {
+    selectBox.addEventListener('change', (e) => {
+      const email = e.target.value;
+      loadThread(email); // ✅ this must be defined
+    });
+  }
+});
+</script>
+
+
+</body>
+
+</html>
+
+
+
+
