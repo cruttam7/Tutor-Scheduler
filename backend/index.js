@@ -344,7 +344,8 @@ subjects: Array.isArray(subjects)
         await tutor.save();
 
         // Send email with the generated password and reset link
-const changePasswordLink = `https://nlf83kc2-3000.aue.devtunnels.ms/change-password-tutor.html?token=${resetToken}`;
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const changePasswordLink = `${BASE_URL}/change-password-tutor.html?token=${resetToken}`;
 const mailOptions = {
   from: 'your-email@gmail.com',
   to: tutor.email,
