@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📚 Assignment Submission</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background-color: #e0f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .submission-box {
+      max-width: 520px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 30px 25px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .submission-box h1 {
+      color: #ff6f61;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .submission-box p {
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .submission-box label {
+      display: block;
+      margin: 12px 0 5px;
+      font-weight: 600;
+      text-align: left;
+      color: #333;
+    }
+
+    .submission-box select,
+    .submission-box textarea,
+    .submission-box input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 2px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .submission-box button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .submission-box button:hover {
+      background-color: #43a047;
+    }
+
+    .success-message {
+      margin-top: 20px;
+      display: none;
+      background-color: #dcedc8;
+      padding: 15px;
+      border-radius: 10px;
+      color: #33691e;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="submission-box">
+    <h1>📚 Submit Your Assignment</h1>
+    <p>You're doing great! Let's upload your work 🌟</p>
+
+<form id="assignmentForm" enctype="multipart/form-data">
+      <label for="subject">📘 Choose Subject</label>
+      <select id="subject" required>
+        <option value="">Loading subjects...</option>
+      </select>
+
+      <label for="description">📝 Assignment Description</label>
+      <textarea id="description" rows="3" placeholder="E.g., My animal research project..." required></textarea>
+
+      <label for="fileUpload">📎 Upload Your File</label>
+      <input type="file" id="fileUpload" required />
+
+      <button type="submit">🎉 Submit Assignment</button>
+    </form>
+
+    <div class="success-message" id="successMessage">
+      🎊 Woohoo! Your assignment was submitted successfully!
+    </div>
+  </div>
+
+  <script>
+    // Dynamic subject loader
+    function loadSubjects() {
+      fetch('/api/student/dashboard', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => {
+          const courses = d.student?.courses || [];
+          const subjectSelect = document.getElementById('subject');
+          subjectSelect.innerHTML = `<option value="">-- Select --</option>` + courses.map(c =>
+            `<option value="${c}">${c}</option>`
+          ).join('');
+        })
+        .catch(() => {
+          document.getElementById('subject').innerHTML = `<option value="">(Error loading subjects)</option>`;
+        });
+    }
+
+    // Form submission handler
+    document.getElementById("assignmentForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const subject = document.getElementById('subject').value;
+  const description = document.getElementById('description').value;
+  const file = document.getElementById('fileUpload').files[0];
+
+  if (!subject || !description || !file) {
+    alert("Please fill in all fields and upload a file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('subject', subject);
+  formData.append('description', description);
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('/api/student/submit-assignment', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      document.getElementById("assignmentForm").reset();
+      document.getElementById("successMessage").style.display = "block";
+    } else {
+      alert("❌ Error: " + (result.message || "Submission failed"));
+    }
+  } catch (error) {
+    console.error("Submission error:", error);
+    alert("❌ Submission failed. Please try again.");
+  }
+});
+
+
+    // Load subjects on page load
+    window.onload = loadSubjects;
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📂 View Student Assignments</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    a.download-link {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a.download-link:hover {
+      text-decoration: underline;
+    }
+
+    .no-data {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 18px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📂 Received Assignments</h1>
+
+  <table id="assignmentTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>👨‍🎓 Student</th>
+        <th>📘 Subject</th>
+        <th>📝 Description</th>
+        <th>📎 File</th>
+        <th>⏰ Submitted At</th>
+      </tr>
+    </thead>
+    <tbody id="assignmentBody">
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
+
+  <div class="no-data" id="noDataMsg">Loading assignments...</div>
+
+  <script>
+    async function loadAssignments() {
+      try {
+        const res = await fetch('/api/tutor/submissions', { credentials: 'include' });
+        const data = await res.json();
+
+        const table = document.getElementById("assignmentTable");
+        const body = document.getElementById("assignmentBody");
+        const msg = document.getElementById("noDataMsg");
+
+        body.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+          msg.innerText = "❌ No assignments received yet.";
+          return;
+        }
+
+        msg.style.display = "none";
+        table.style.display = "table";
+
+        data.forEach(assign => {
+          const row = document.createElement("tr");
+         row.innerHTML = `
+  <td>${assign.studentName}</td>
+  <td>${assign.subject || "N/A"}</td>
+  <td>${assign.answerText}</td>
+  <td><a href="/${assign.fileUrl}" class="download-link" target="_blank">📥 Download</a></td>
+  <td>${new Date(assign.submittedAt).toLocaleString()}</td>
+`;
+
+          body.appendChild(row);
+        });
+
+      } catch (err) {
+        console.error("❌ Error loading assignments:", err);
+        document.getElementById("noDataMsg").innerText = "Error loading assignments.";
+      }
+    }
+
+    loadAssignments();
+  </script>
+
+</body>
+</html>

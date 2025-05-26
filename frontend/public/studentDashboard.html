@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <title>🎓 Student Dashboard</title>
 
  <style> /*--------------------
@@ -143,6 +145,85 @@ body {
   margin-top: 0.5rem;
 }
 .widget__mood-response { margin-top: 0.5rem; font-style: italic; }
+/* 
+/* 🔔 Notification Bell Button */
+.icon-btn {
+  background: none;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 22px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 🔴 Notification Count Badge */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #34495e;
+  z-index: 10;
+}
+
+
+/* 🔽 Dropdown Notification Box */
+.notif-dropdown {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  width: 300px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  z-index: 1000;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* List container */
+.notif-dropdown ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* List item */
+.notif-dropdown li {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.notif-dropdown li:hover {
+  background-color: #f8f8f8;
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -170,8 +251,8 @@ body {
     <nav class="sidebar__nav">
       <a class="sidebar__link" href="#stats">📊 Stats</a>
       <a class="sidebar__link" href="#calendar">📅 Calendar</a>
-      <a class="sidebar__link" href="#assignments">📝 Assignments</a>
-      <a class="sidebar__link" href="#messages">📩 Messages</a>
+      <a class="sidebar__link" href="/student/student-assignments.html">📝 Assignments</a>
+<a class="sidebar__link" href="/student/student-messages.html">📩 Messages</a>
       <a class="sidebar__link" href="#badges">🏅 Badges</a>
       <a class="sidebar__link" href="#profile">🧑 Profile</a>
       <a class="sidebar__link" href="#goals">🎯 Goals</a>
@@ -184,11 +265,29 @@ body {
   <div class="dashboard">
     <!-- Header -->
     <header class="header">
-      <div class="header__greeting">
-        <h1 class="header__title">👋 Hello, <span id="studentName">Student</span>!</h1>
+  <div class="header__greeting">
+    <h1 class="header__title">👋 Hello, <span id="studentName">Student</span>!</h1>
+  </div>
+
+  <!-- Right-side container: avatar + bell -->
+  <div style="display: flex; align-items: center; gap: 1rem; position: relative;">
+    <!-- 🔔 Notification Bell (positioned inside relative container) -->
+    <div class="notification-wrapper" style="position: absolute; top: -5px; right: 55px;">
+      <button id="studentNotificationBtn" class="icon-btn" style="position: relative;">
+        <i class="fas fa-bell"></i>
+        <span id="studentNotifCountBadge" class="badge" style="display: none;">0</span>
+      </button>
+      <div id="studentNotifDropdown" class="notif-dropdown" style="display: none;">
+        <ul id="studentNotifList"></ul>
       </div>
-      <div class="header__avatar" id="studentAvatar">😊</div>
-    </header>
+    </div>
+
+    <!-- Avatar -->
+    <div class="header__avatar" id="studentAvatar">😊</div>
+  </div>
+</header>
+
+
 
     <!-- Stats Section -->
     <section class="widgets" id="stats">
@@ -251,7 +350,6 @@ body {
         <h2 class="widget__title">🧑 My Profile</h2>
         <p><strong>Name:</strong> <span id="profileName">--</span></p>
         <p><strong>Grade:</strong> <span id="profileGrade">--</span></p>
-        <p><strong>School:</strong> <span id="profileSchool">--</span></p>
         <p><strong>DOB:</strong> <span id="profileDOB">--</span></p>
       </div>
       <div class="widget">
@@ -259,6 +357,7 @@ body {
         <p id="currentDate">Loading…</p>
         <p id="currentTime">Loading…</p>
         <button class="btn" onclick="logout()">🔓 Logout</button>
+
       </div>
       <div class="widget" id="goals">
         <h2 class="widget__title">🎯 Today's Goals</h2>
@@ -306,7 +405,7 @@ body {
     // --- Utility: Logout & Session Timeout ---
 function logout() {
   fetch('/students/logout', { method: 'POST', credentials: 'include' })
-    .then(() => window.location.href = '/students/login');
+    .then(() => window.location.href = 'index.html');
 }
 
 // Auto-logout after 10m inactivity
@@ -339,7 +438,6 @@ function loadProfile() {
       document.getElementById('studentName').textContent = s.studentName || 'Student';
       document.getElementById('profileName').textContent = s.studentName || '--';
       document.getElementById('profileGrade').textContent = s.studentGrade || '--';
-      document.getElementById('profileSchool').textContent = s.studentSchool || '--';
       document.getElementById('profileDOB').textContent = s.studentDOB 
         ? new Date(s.studentDOB).toLocaleDateString() 
         : '--';
@@ -496,6 +594,110 @@ function loadCalendar() {
     });
 }
 
+// ✅ Convert timestamps to "x minutes ago"
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  const intervals = [
+    { label: 'y', seconds: 31536000 },
+    { label: 'mo', seconds: 2592000 },
+    { label: 'd', seconds: 86400 },
+    { label: 'h', seconds: 3600 },
+    { label: 'm', seconds: 60 },
+    { label: 's', seconds: 1 }
+  ];
+  for (const i of intervals) {
+    const count = Math.floor(seconds / i.seconds);
+    if (count > 0) return `${count}${i.label} ago`;
+  }
+  return 'just now';
+}
+
+
+// 🔔 Toggle student dropdown visibility
+document.getElementById('studentNotificationBtn').addEventListener('click', function (e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('studentNotifDropdown');
+  dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+// 🔒 Close student dropdown when clicking outside
+document.addEventListener('click', function (e) {
+  const dropdown = document.getElementById('studentNotifDropdown');
+  const bell = document.getElementById('studentNotificationBtn');
+  if (!bell.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+async function loadStudentUnreadMessagesPreview() {
+  try {
+    const res = await fetch(`/api/messages/inbox`);
+    const messages = await res.json();
+
+    const unread = Array.isArray(messages) ? messages.filter(m => !m.read).slice(0, 5) : [];
+
+    const badge = document.getElementById('studentNotifCountBadge');
+    const list = document.getElementById('studentNotifList');
+
+    if (!list || !badge) return;
+
+    list.innerHTML = '';
+
+    if (unread.length > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = unread.length > 9 ? '9+' : unread.length;
+    } else {
+      badge.style.display = 'none';
+      list.innerHTML = '<li style="padding:10px;">No new messages</li>';
+      return;
+    }
+
+    unread.forEach(msg => {
+      const senderName = msg.senderName || msg.senderEmail;
+      const preview = msg.body?.slice(0, 30) || '';
+      const timeAgo = timeSince(new Date(msg.timestamp));
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <strong>${senderName}</strong><br>
+        <small>${preview}</small><br>
+        <span style="font-size: 11px; color: gray;">${timeAgo}</span>
+      `;
+
+      li.onclick = async () => {
+        try {
+          await fetch(`/api/messages/thread/mark-read/${msg.senderEmail}`, {
+            method: 'PUT'
+          });
+
+          li.remove();
+
+          const remaining = list.querySelectorAll('li').length;
+          if (remaining === 0) {
+            badge.style.display = 'none';
+            list.innerHTML = '<li style="padding:10px;">No new messages</li>';
+          } else {
+            badge.textContent = remaining > 9 ? '9+' : remaining;
+          }
+
+          localStorage.setItem('selectedUserEmail', msg.senderEmail);
+          window.location.href = '/student/student-messages.html';
+        } catch (error) {
+          console.error('❌ Error marking student message as read:', error);
+        }
+      };
+
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to load student messages:', err);
+    const list = document.getElementById('studentNotifList');
+    if (list) list.innerHTML = `<li style="color:red; padding:10px;">Error loading messages</li>`;
+  }
+}
+
+
 // --- Initialize All ---
 window.addEventListener('DOMContentLoaded', () => {
   loadProfile();
@@ -507,6 +709,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadAssignments();
   loadMessages();
   loadCalendar();
+  loadStudentUnreadMessagesPreview();
+
 });
 
   </script>

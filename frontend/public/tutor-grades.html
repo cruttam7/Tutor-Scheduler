@@ -81,7 +81,7 @@
 </div>
 
 <div class="container">
-
+<!-- 
   <!-- ✅ GRADE ENTRY FORM -->
   <div class="form-section">
     <h2>Assign or Edit Grade</h2>
@@ -136,7 +136,7 @@
   </select>
   <button class="btn btn-outline-success" onclick="downloadPDF('single')">🖨️ PDF Per Student</button>
   <button class="btn btn-outline-dark" onclick="downloadPDF('combined')">🗃️ Combined PDF</button>
-</div>
+</div> 
 
 
   <!-- ✅ GRADES TABLE -->
@@ -532,7 +532,23 @@ function sendGradeToStudent(gradeId, buttonElement) {
   noBtn.onclick = () => {
     toast.style.display = "none";
   };
-}
+}document.getElementById('student').addEventListener('change', async function () {
+  const studentId = this.value;
+  if (!studentId) return;
+
+  try {
+    const res = await fetch(`/api/students/${studentId}`, { credentials: 'include' });
+    const data = await res.json();
+    const courses = data.courses || [];
+
+    const subjectSelect = document.getElementById('subject');
+    subjectSelect.innerHTML = `<option value="">-- Select --</option>` + 
+      courses.map(course => `<option value="${course}">${course}</option>`).join('');
+  } catch (err) {
+    document.getElementById('subject').innerHTML = `<option value="">(Error loading subjects)</option>`;
+  }
+});
+
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>

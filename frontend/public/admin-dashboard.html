@@ -775,40 +775,47 @@
   }
 
   // Load pie chart for course distribution
-  async function loadCourseDistribution() {
+ async function loadCourseDistribution() {
     try {
-      const response = await fetch('/course-distribution', {
-        method: 'GET',
-        credentials: 'include'
-      });
+        const response = await fetch('/course-distribution', { // ← HERE!
+            method: 'GET',
+            credentials: 'include'
+        });
 
-      const data = await response.json();
-      const labels = Object.keys(data);
-      const values = Object.values(data);
+        const data = await response.json();
+        console.log('Course distribution:', data);
 
-      const ctx = document.getElementById('courseChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: ['#2ecc71', '#3498db', '#e67e22', '#9b59b6', '#f1c40f']
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom' },
-            title: { display: true, text: 'Percentage of Students by Course' }
-          }
-        }
-      });
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+
+        const ctx = document.getElementById('courseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#2ecc71', '#3498db', '#e67e22', '#9b59b6', '#f1c40f']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Percentage of Students by Course'
+                    }
+                }
+            }
+        });
 
     } catch (error) {
-      console.error('Error loading course distribution:', error);
+        console.error('Error loading course distribution:', error);
     }
-  }
+}
 
   // Load line chart for account creation trend
   async function loadAccountTrendChart() {

@@ -691,7 +691,8 @@ app.post('/tutors/create-student', tutorAuth, async (req, res) => {
     await student.save();
 
     // ✅ Send welcome email with temp credentials
-    const resetLink = `${process.env.BASE_URL}/reset-password-student.html?token=${resetToken}`;
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const changePasswordLink = `${BASE_URL}/change-password-student.html?token=${resetToken}`;
 const mailOptions = { 
   from: 'uttam.dhakal777@gmail.com',
   to: email || guardianEmail,
@@ -938,7 +939,7 @@ app.delete('/admin/manage-users/students/:id', adminAuth, async (req, res) => {
   }
 });
 
-// ✅ Student Dashboard API
+//Student Dashboard API with Tutor Email
 app.get('/api/student/dashboard', studentAuth, async (req, res) => {
   const studentId = req.session?.student?.id;
 
@@ -957,7 +958,46 @@ app.get('/api/student/dashboard', studentAuth, async (req, res) => {
   }
 });
 
+
+// new one for the piechart
+// Example in Node.js with Express
+app.get('/course-distribution', async (req, res) => {
+  try {
+    const students = await Student.find({}, 'courses');
+    const subjectCount = {};
+
+    students.forEach(student => {
+      student.courses.forEach(course => {
+        subjectCount[course] = (subjectCount[course] || 0) + 1;
+      });
+    });
+
+    res.status(200).json(subjectCount);
+  } catch (error) {
+    console.error('Error getting course distribution:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 /////////////////////////////////////////////////📅 PART 5: Event System – Create, Fetch, Update, Delete, Assign/////////////////////////////////////
+// ✅ Get tutor by ID (used by student messaging page)
+//added one for tutors mail in student messaging
+// 🔧 Route to get a tutor by ID using the User model
+// Example route
+app.get('/api/tutors/:id', async (req, res) => {
+  try {
+    const tutor = await User.findById(req.params.id);
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor not found' });
+    }
+    res.json({ email: tutor.email }); // Only send what's needed
+  } catch (error) {
+    console.error("❌ Error fetching tutor:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 // ✅ Create Event (Tutor assigns to students)
 app.post('/api/events/create', async (req, res) => {
   const { title, date, time, location, description, classType, students, createdBy } = req.body;
@@ -1125,6 +1165,55 @@ app.post('/api/messages/send', upload.single('attachment'), async (req, res) => 
     res.status(500).json({ message: 'Failed to send message' });
   }
 });
+app.post('/api/messages/send', upload.single('attachment'), async (req, res) => {
+  const { subject, body, recipientEmail: manualRecipient } = req.body;
+  const attachment = req.file ? req.file.filename : null;
+
+  const senderEmail = 
+    req.session?.admin?.email || 
+    req.session?.tutor?.email || 
+    req.session?.student?.email;
+
+  if (!senderEmail) {
+    return res.status(401).json({ message: 'Unauthorized. Please log in.' });
+  }
+
+  try {
+    let recipientEmail = manualRecipient;
+
+    // ✅ If sender is a student, automatically route to assigned tutor
+    if (req.session?.student) {
+      const student = await Student.findOne({ email: senderEmail });
+
+      if (!student || !student.assignedTutorId) {
+        return res.status(400).json({ message: 'No assigned tutor found for student.' });
+      }
+
+      const tutor = await User.findById(student.assignedTutorId);
+      if (!tutor) {
+        return res.status(400).json({ message: 'Assigned tutor does not exist.' });
+      }
+
+      recipientEmail = tutor.email;
+    }
+
+    const newMessage = new Message({
+      senderEmail,
+      recipientEmail,
+      subject,
+      body,
+      attachment
+    });
+
+    await newMessage.save();
+    res.status(200).json({ message: '📤 Message sent successfully' });
+
+  } catch (err) {
+    console.error('❌ Error sending message:', err);
+    res.status(500).json({ message: 'Failed to send message' });
+  }
+});
+
 
 // Fetch inbox
 app.get('/api/messages/inbox/:email', async (req, res) => {
@@ -1628,7 +1717,7 @@ app.get('/tutors/my-assignments', tutorAuth, async (req, res) => {
 // ✅ Student Submits Assignment (File Upload)
 app.post('/assignments/submit-file', studentAuth, upload.single('file'), async (req, res) => {
   const studentId = req.session?.student?.id;
-  const { assignmentId, answerText } = req.body;
+  const { assignmentId, subject, answerText } = req.body;
   const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
@@ -1639,6 +1728,7 @@ app.post('/assignments/submit-file', studentAuth, upload.single('file'), async (
       assignmentId,
       studentId,
       answerText,
+      subject,
       fileUrl
     });
 
@@ -1651,23 +1741,50 @@ app.post('/assignments/submit-file', studentAuth, upload.single('file'), async (
 });
 
 // ✅ Tutor Views All Submissions
-app.get('/tutors/submissions', tutorAuth, async (req, res) => {
-  const tutorId = req.session?.tutor?.id;
+// app.get('/tutors/submissions', tutorAuth, async (req, res) => {
+//   const tutorId = req.session?.tutor?.id;
+
+//   try {
+//     const tutorAssignments = await Assignment.find({ createdBy: tutorId }).select('_id');
+//     const assignmentIds = tutorAssignments.map(a => a._id);
+
+//     const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } })
+//       .populate('assignmentId', 'title')
+//       .populate('studentId', 'studentName');
+
+//     res.status(200).json(submissions);
+//   } catch (error) {
+//     console.error('❌ Submission fetch error:', error.message);
+//     res.status(500).json({ message: 'Failed to fetch submissions' });
+//   }
+// });
+app.get('/api/tutor/submissions', async (req, res) => {
+  const tutorEmail = req.session?.tutor?.email || req.user?.email;
 
   try {
-    const tutorAssignments = await Assignment.find({ createdBy: tutorId }).select('_id');
-    const assignmentIds = tutorAssignments.map(a => a._id);
+    const tutor = await User.findOne({ email: tutorEmail });
+    const students = await Student.find({ assignedTutorId: tutor._id });
 
-    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } })
-      .populate('assignmentId', 'title')
-      .populate('studentId', 'studentName');
+    const studentIds = students.map(s => s._id);
+    const submissions = await Submission.find({ studentId: { $in: studentIds } })
+      .populate('studentId', 'studentName')
+      .sort({ submittedAt: -1 });
 
-    res.status(200).json(submissions);
-  } catch (error) {
-    console.error('❌ Submission fetch error:', error.message);
-    res.status(500).json({ message: 'Failed to fetch submissions' });
+    const formatted = submissions.map(s => ({
+      studentName: s.studentId?.studentName || 'Unknown',
+      subject: s.subject || 'General',
+      answerText: s.answerText,
+      fileUrl: s.fileUrl,
+      submittedAt: s.submittedAt,
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("❌ Error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 // ✅ Grade to Letter Converter
 function getGradeLetter(percent) {
@@ -1880,6 +1997,98 @@ app.get('/api/students/detailed', tutorAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to load students' });
   }
 });
+// new code for studentassignment submission
+
+// ✅ Assignment Submission Route
+app.post('/api/student/submit-assignment', upload.single('file'), async (req, res) => {
+  try {
+    console.log("📥 Assignment submission started...");
+
+    const studentId = req.session?.student?.id || req.user?._id;
+    const { subject, description } = req.body;
+
+    if (!req.file || !subject || !description) {
+      return res.status(400).json({ message: 'Missing subject, description, or file.' });
+    }
+
+    // ✅ Populate the tutor's email
+    const student = await Student.findById(studentId).populate({
+      path: 'assignedTutorId',
+        model: 'User', // ✅ explicitly mention model if needed
+
+      select: 'email username'
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    console.log("👨‍🎓 Student:", student.studentName);
+    console.log("📧 Assigned Tutor Email:", student.assignedTutorId?.email);
+
+    const newSubmission = new Submission({
+      studentId,
+        subject, // ✅ Add this line
+
+      answerText: description,
+      fileUrl: req.file.path,
+      submittedAt: new Date()
+    });
+
+    await newSubmission.save();
+    console.log("✅ Submission saved to database");
+
+    // ✅ Notify tutor if email exists
+    const tutorEmail = student.assignedTutorId?.email;
+
+    if (tutorEmail) {
+      await Message.create({
+        senderEmail: 'uttam.dhakal777@gmail.com',
+        recipientEmail: tutorEmail,
+        subject: `📚 Assignment Submitted`,
+        body: `Hello,\n\nYour student ${student.studentName} has submitted an assignment for the subject "${subject}".\n\nPlease log in to review the submission.\n\n— TASTICODES`,
+        timestamp: new Date(),
+        read: false
+      });
+      console.log("✅ Message sent to tutor:", tutorEmail);
+    } else {
+      console.log("❌ No tutor email found. Message not sent.");
+    }
+
+    res.status(200).json({ message: 'Submission successful. Tutor notified if email available.' });
+
+  } catch (error) {
+    console.error('❌ Submission Error:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+});
+// ✅ Get all students assigned to a specific tutor
+app.get('/api/students/assigned-to/:tutorId', async (req, res) => {
+  const { tutorId } = req.params;
+
+  try {
+    const students = await Student.find({ assignedTutorId: tutorId }).select('studentName email courses');
+    
+    if (students.length === 0) {
+      return res.status(404).json({ message: "No students assigned to this tutor ID" });
+    }
+
+    res.json(students);
+  } catch (error) {
+    console.error("❌ Error fetching students by tutorId:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.get('/api/students/:id', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.json(student);
+  } catch (err) {
+    console.error("❌ Fetch student by ID error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 // 🏠 Home Route
@@ -1892,8 +2101,11 @@ app.use((req, res) => {
   res.status(404).json({ message: '❌ API Route Not Found' });
 });
 
+
 // 🚀 Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
+    console.log(`✅ Server running at http://localhost:${PORT}`);
+
 });
