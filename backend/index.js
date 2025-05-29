@@ -344,7 +344,7 @@ subjects: Array.isArray(subjects)
         await tutor.save();
 
         // Send email with the generated password and reset link
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL;
 const changePasswordLink = `${BASE_URL}/change-password-tutor.html?token=${resetToken}`;
 const mailOptions = {
   from: 'your-email@gmail.com',
@@ -504,7 +504,7 @@ app.post('/tutors/forgot-password', async (req, res) => {
     tutor.resetPasswordExpires = resetExpires;
     await tutor.save();
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL;
 const resetLink = `${BASE_URL}/reset-password.html?role=teacher&token=${resetToken}`;   
  const mailOptions = {
   from: 'your-email@gmail.com',
@@ -691,7 +691,7 @@ app.post('/tutors/create-student', tutorAuth, async (req, res) => {
     await student.save();
 
     // ✅ Send welcome email with temp credentials
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+ const BASE_URL = process.env.BASE_URL;
 const changePasswordLink = `${BASE_URL}/change-password-student.html?token=${resetToken}`;
 const mailOptions = { 
   from: 'uttam.dhakal777@gmail.com',
@@ -776,24 +776,37 @@ app.post('/students/login', async (req, res) => {
 
   try {
     const student = await Student.findOne({ email });
-    if (!student) return res.status(400).json({ message: 'Student not found' });
+    if (!student) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
 
     const isMatch = await bcrypt.compare(password, student.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
 
+    // ✅ Store student in session
     req.session.student = {
-      id: student._id,
-      email: student.email,
-      username: student.username
-    };
+  id: student._id,
+  email: student.email,
+  username: student.username  // ✅ Added for display
+};
 
-    await LoginEvent.create({ userId: student._id, role: 'student' });
-    await Session.create({ userId: student._id });
 
-    res.status(200).json({ message: 'Login successful', student: req.session.student });
+    return res.status(200).json({ message: 'Login successful', student: req.session.student });
   } catch (error) {
-    res.status(500).json({ message: 'Login error', error: error.message });
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
+});
+
+app.get('/api/student/me', (req, res) => {
+  if (!req.session.student) {
+    return res.status(401).json({ message: '⚠️ Session expired. Please log in again.' });
+  }
+
+  const { id, email, username } = req.session.student;
+  res.status(200).json({ id, email, username });
 });
 
 // ✅ Student Forgot Password
@@ -811,7 +824,7 @@ app.post('/students/forgot-password', async (req, res) => {
     student.resetPasswordExpires = resetExpires;
     await student.save();
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL;
 const resetLink = `${BASE_URL}/reset-password.html?role=student&token=${resetToken}`;
 const mailOptions = { 
   from: 'your-email@gmail.com',
@@ -903,6 +916,45 @@ app.post('/students/reset-password-with-token/:token', async (req, res) => {
   } catch (err) {
     console.error('Student reset error:', err.message);
     res.status(500).json({ message: 'Reset error' });
+  }
+});
+
+// ✅ Student Changes Password (After Login or First Login Flow)
+app.post('/students/change-password-student/:token', async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const { token } = req.params;
+
+  try {
+    const student = await Student.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!student) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect.' });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: 'New password must be different from the current password.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    student.password = hashedPassword;
+    student.resetPasswordToken = undefined;
+    student.resetPasswordExpires = undefined;
+    student.firstLogin = false;
+
+    await student.save();
+    res.status(200).json({ message: '✅ Password changed successfully!' });
+
+  } catch (error) {
+    console.error('❌ Password change error:', error.message);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -1048,12 +1100,19 @@ app.get('/api/events/created-by/:email', async (req, res) => {
 // ✅ Get Events Assigned to Student
 app.get('/api/events/assigned-to/:email', async (req, res) => {
   try {
-    const events = await CalendarEvent.find({ students: req.params.email }).sort({ date: 1 });
+    const student = await Student.findOne({ email: req.params.email });
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    const events = await CalendarEvent.find({ students: student._id }).sort({ date: 1 });
     res.status(200).json(events);
   } catch (err) {
+    console.error('❌ Event fetch error:', err);
     res.status(500).json({ message: 'Failed to fetch events' });
   }
 });
+
 
 // ✅ View Single Event Details
 app.get('/api/events/:id', async (req, res) => {
@@ -1436,6 +1495,30 @@ app.get('/api/students/min', tutorAuth, async (req, res) => {
   }
 });
 
+// ✅ Get currently logged-in student info (for dashboard)
+app.get('/api/student/me', async (req, res) => {
+  if (!req.session?.student?.id) {
+    return res.status(401).json({ message: 'Unauthorized. No student session found.' });
+  }
+
+  try {
+    const student = await Student.findById(req.session.student.id).select('studentName username email');
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    res.status(200).json({
+      id: student._id,
+      email: student.email,
+      username: student.username,
+      studentName: student.studentName
+    });
+  } catch (err) {
+    console.error('❌ Error fetching student:', err.message);
+    res.status(500).json({ message: 'Failed to load student info' });
+  }
+});
+
+
+
 
 ///////////////////////////////////////////////////////////////📊 PART 7: Admin Analytics, Stats Widgets, and Trends///////////////////////////////////
 // /// ✅ Admin Dashboard Stats Widget
@@ -1605,6 +1688,83 @@ app.get('/api/user/attendance-report', async (req, res) => {
   } catch (error) {
     console.error('Error fetching attendance records:', error);
     res.status(500).json({ error: 'Failed to fetch attendance records.' });
+  }
+});
+
+// ✅ Get Attendance Summary for a Student
+
+// ✅ Get summary for a student
+app.get('/api/attendance/summary/:name', async (req, res) => {
+  const studentNameParam = req.params.name.trim().toLowerCase();
+
+  try {
+    const attendanceData = await Attendance.find({});
+
+    let total = 0;
+    let present = 0;
+
+    attendanceData.forEach(entry => {
+      entry.records.forEach(record => {
+        const recordName = record.studentName?.trim().toLowerCase();
+        if (recordName === studentNameParam) {
+          total++;
+          if (record.status === 'Present') present++;
+        }
+      });
+    });
+
+    res.json({ student: studentNameParam, presentDays: present, totalDays: total });
+  } catch (err) {
+    console.error("❌ Attendance summary error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+app.get('/api/attendance/all-names', async (req, res) => {
+  const data = await Attendance.find({});
+  const names = [];
+
+  data.forEach(entry => {
+    entry.records.forEach(r => {
+      if (r.studentName && !names.includes(r.studentName)) {
+        names.push(r.studentName);
+      }
+    });
+  });
+
+  res.json(names);
+});
+
+
+
+// 📌 Get attendance records for a student by email
+app.get('/api/attendance/student/:email', async (req, res) => {
+  try {
+    const student = await Student.findOne({ email: req.params.email });
+    if (!student) return res.status(404).json([]);
+
+    // 🧠 Scan all attendance documents, pull out matching records
+    const all = await Attendance.find({});
+
+    const matchedRecords = [];
+
+    all.forEach(doc => {
+      (doc.records || []).forEach(record => {
+        if (record.studentName === student.studentName) {
+          matchedRecords.push({
+            week: doc.week,
+            course: record.course,
+            status: record.status
+          });
+        }
+      });
+    });
+
+    res.status(200).json(matchedRecords);
+  } catch (err) {
+    console.error('❌ Error loading attendance:', err);
+    res.status(500).json([]);
   }
 });
 
@@ -1827,7 +1987,10 @@ app.get('/students/my-grades', studentAuth, async (req, res) => {
   const studentId = req.session?.student?.id;
 
   try {
-    const grades = await Grade.find({ studentId })
+    const grades = await Grade.find({ 
+        studentId, 
+        isSentToStudent: true // ✅ Only show grades marked as sent
+      })
       .select('subject score maxScore feedback date gradedBy')
       .populate('gradedBy', 'username');
 
@@ -1837,6 +2000,7 @@ app.get('/students/my-grades', studentAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch grades' });
   }
 });
+
 
 // ✅ Tutor Views Grades of Their Students
 app.get('/tutors/my-grades', tutorAuth, async (req, res) => {
@@ -1900,31 +2064,27 @@ app.delete('/grades/:id', tutorAuth, async (req, res) => {
 });
 
 // ✅ Send Grade to Student Inbox
+
 app.post('/grades/:id/send-to-student', tutorAuth, async (req, res) => {
   const tutorId = req.session?.tutor?.id;
 
   try {
     const grade = await Grade.findById(req.params.id).populate('studentId');
     if (!grade) return res.status(404).json({ message: 'Grade not found' });
+
     if (grade.gradedBy.toString() !== tutorId) {
       return res.status(403).json({ message: 'Unauthorized action' });
+    }
+
+    // ❌ Prevent sending again
+    if (grade.isSentToStudent) {
+      return res.status(409).json({ message: '⚠️ This grade has already been sent to the student.' });
     }
 
     const student = grade.studentId;
     const percent = Math.round((grade.score / grade.maxScore) * 100);
     const letter = getGradeLetter(percent);
-
     const subjectLine = `New Grade for ${grade.subject}`;
-
-    const alreadySent = await Message.findOne({
-      senderEmail: req.session.tutor.email,
-      recipientEmail: student.email,
-      subject: subjectLine
-    });
-
-    if (alreadySent) {
-      return res.status(409).json({ message: '⚠️ This grade has already been sent to the student.' });
-    }
 
     const message = new Message({
       senderEmail: req.session.tutor.email,
@@ -1935,12 +2095,18 @@ app.post('/grades/:id/send-to-student', tutorAuth, async (req, res) => {
     });
 
     await message.save();
+
+    // ✅ Mark grade as sent
+    grade.isSentToStudent = true;
+    await grade.save();
+
     res.status(200).json({ message: '✅ Grade sent to student inbox!' });
   } catch (err) {
     console.error("❌ Error sending grade to student:", err.message);
     res.status(500).json({ message: 'Failed to send grade to student' });
   }
 });
+
 
 
 

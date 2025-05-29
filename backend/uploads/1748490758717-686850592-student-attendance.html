@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎉 My Attendance Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background-color: #f4f9ff;
+      color: #2c3e50;
+    }
+
+    .header {
+      background-color: #4d91ff;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .summary-box {
+      background-color: #e3f2fd;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .summary-box h2 {
+      font-size: 22px;
+      color: #1976d2;
+      margin-bottom: 10px;
+    }
+
+    .summary-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      margin: 10px auto;
+      background-color: #bbdefb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #0d47a1;
+      border: 8px solid #64b5f6;
+    }
+
+    .feedback {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      background-color: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #4d91ff;
+      padding-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #4d91ff;
+      color: white;
+    }
+
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📘 My Weekly Attendance</h1>
+  <span id="studentName">👋 Loading...</span>
+</div>
+
+<div class="container">
+  <div class="summary-box">
+    <h2>🎯 Attendance Summary</h2>
+    <div class="summary-circle" id="percentCircle">--%</div>
+    <div class="feedback" id="feedbackMessage">Loading...</div>
+  </div>
+
+  <div class="section-title">📅 Detailed Attendance</div>
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>📆 Week</th>
+        <th>📚 Course</th>
+        <th>✅ Status</th>
+      </tr>
+    </thead>
+    <tbody id="attendanceBody">
+      <tr><td colspan="3">⏳ Loading attendance records...</td></tr>
+    </tbody>
+  </table>
+
+  <div id="message" class="message" style="display: none;"></div>
+</div>
+
+<script>
+  async function loadStudentAttendance() {
+    try {
+      const profileRes = await fetch('/api/student/me', { credentials: 'include' });
+      const profile = await profileRes.json();
+
+      if (!profile || !profile.email) {
+        document.getElementById('studentName').textContent = '⚠️ Session expired. Please log in again.';
+        return;
+      }
+
+      // ✅ Use student's full name (priority: studentName > name > username > email)
+      const name = profile.studentName || profile.name || profile.username || profile.email;
+      document.getElementById('studentName').textContent = `👋 Welcome, ${name}`;
+
+      // ✅ Fetch attendance data
+      const response = await fetch(`/api/attendance/student/${profile.email}`);
+      const data = await response.json();
+      const tbody = document.getElementById('attendanceBody');
+      tbody.innerHTML = '';
+
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="3">❌ No attendance records available.</td></tr>`;
+        return;
+      }
+
+      // ✅ Attendance logic
+      let present = 0;
+      const total = data.length;
+
+      data.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${record.week}</td>
+          <td>${record.course}</td>
+          <td>${record.status}</td>
+        `;
+        tbody.appendChild(row);
+
+        if (record.status.toLowerCase() === 'present') {
+          present++;
+        }
+      });
+
+      // ✅ Percentage calculation
+      const percent = Math.round((present / total) * 100);
+      document.getElementById("percentCircle").textContent = `${percent}%`;
+
+      // ✅ Feedback messages
+      let message = "Keep going!";
+      if (percent === 100) message = "🌟 Perfect attendance! You're a star!";
+      else if (percent >= 80) message = "💪 Great job! Almost perfect!";
+      else if (percent >= 60) message = "🙂 Doing well, try to attend more!";
+      else message = "🚨 Let's improve your attendance!";
+
+      document.getElementById("feedbackMessage").textContent = message;
+
+    } catch (err) {
+      console.error(err);
+      const msg = document.getElementById('message');
+      msg.textContent = '❌ Failed to load attendance data.';
+      msg.className = 'message error';
+      msg.style.display = 'block';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadStudentAttendance);
+</script>
+
+
+</body>
+</html>

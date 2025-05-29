@@ -7,7 +7,8 @@ const gradeSchema = new mongoose.Schema({
   maxScore: { type: Number, required: true },
   feedback: String,
   gradedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  isSentToStudent: { type: Boolean, default: false } // ✅ Added field to track sending status
 });
 
 module.exports = mongoose.model('Grade', gradeSchema);
